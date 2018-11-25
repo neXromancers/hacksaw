@@ -7,18 +7,12 @@ fn main() {
 
     let window = conn.generate_id();
 
-    let width = screen.width_in_pixels();
-    let height = screen.height_in_pixels();
-
-    println!("width {} height {}", width, height);
-
     let values = [
         // ?RGB. First 4 bytes appear to do nothing
         (xcb::CW_BACK_PIXEL, 0x00_00_00_00),
         (
             xcb::CW_EVENT_MASK,
-            xcb::EVENT_MASK_EXPOSURE
-                | xcb::EVENT_MASK_KEY_PRESS // we'll need this later
+            xcb::EVENT_MASK_EXPOSURE | xcb::EVENT_MASK_KEY_PRESS, // we'll need this later
         ),
         (xcb::CW_OVERRIDE_REDIRECT, 1 as u32), // Don't be window managed
     ];
@@ -52,17 +46,25 @@ fn main() {
         title.as_bytes(),
     );
 
+    let font = conn.generate_id();
+    xcb::open_font(&conn, font, "cursor");
+
+    // TODO: create cursor with a Pixmap
+    // https://stackoverflow.com/questions/40578969/how-to-create-a-cursor-in-x11-from-raw-data-c
+    let cursor = conn.generate_id();
+    xcb::create_glyph_cursor(&conn, cursor, font, font, 0, 30, 0, 0, 0, 0, 0, 0);
+
     xcb::grab_pointer(
         &conn,
         true,
         screen.root(),
         (xcb::EVENT_MASK_BUTTON_RELEASE
             | xcb::EVENT_MASK_BUTTON_PRESS
-            | xcb::EVENT_MASK_BUTTON_1_MOTION) as u16,
+            | xcb::EVENT_MASK_BUTTON_MOTION) as u16,
         xcb::GRAB_MODE_ASYNC as u8,
         xcb::GRAB_MODE_ASYNC as u8,
         xcb::NONE,
-        xcb::NONE,
+        cursor,
         xcb::CURRENT_TIME,
     ).get_reply()
     .unwrap();
@@ -81,36 +83,41 @@ fn main() {
         match ev.response_type() {
             xcb::BUTTON_PRESS => {
                 let button_press: &xcb::ButtonPressEvent = unsafe { xcb::cast_event(&ev) };
-                println!(
-                    "Mouse press: x={}, y={}",
-                    button_press.event_x(),
-                    button_press.event_y()
-                );
+
+                if button_press.detail() == 3 {
+                    println!("Exiting due to right click");
+                    return;
+                }
+
                 start_x = button_press.event_x();
                 start_y = button_press.event_y();
+
+                // For the case where there is no motion
+                x = start_x;
+                y = start_y;
             }
-            xcb::BUTTON_RELEASE => {
-                let button_release: &xcb::ButtonReleaseEvent = unsafe { xcb::cast_event(&ev) };
-                println!(
-                    "Mouse release: x={}, y={}",
-                    button_release.event_x(),
-                    button_release.event_y()
-                );
-                break; // Move on after mouse released
+            xcb::KEY_PRESS => {
+                println!("Exiting due to key press");
+                return;
             }
             xcb::MOTION_NOTIFY => {
                 let motion: &xcb::MotionNotifyEvent = unsafe { xcb::cast_event(&ev) };
-                println!(
-                    "Mouse motion: x={}, y={}",
-                    motion.event_x(),
-                    motion.event_y()
-                );
                 x = motion.event_x();
                 y = motion.event_y();
+                // TODO draw rectangles (and guides)
+            }
+            xcb::BUTTON_RELEASE => {
+                let motion: &xcb::ButtonReleaseEvent = unsafe { xcb::cast_event(&ev) };
+                match motion.detail() {
+                    5 => continue, // Scroll wheel down
+                    4 => continue, // Scroll wheel up
+                    _ => break,    // Move on after mouse released
+                }
             }
             _ => continue,
         };
     }
+
     // Now we have taken coordinates, we use them
     let width = (x - start_x).abs();
     let height = (y - start_y).abs();
