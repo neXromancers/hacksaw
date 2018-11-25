@@ -1,8 +1,5 @@
 extern crate xcb;
 
-// use std::fs::File;
-// use std::io::Write;
-
 fn main() {
     let (conn, screen_num) = xcb::Connection::connect(None).unwrap();
     let setup = conn.get_setup();
@@ -15,35 +12,9 @@ fn main() {
 
     println!("width {} height {}", width, height);
 
-    let screenshot = xcb::get_image(
-        &conn,
-        xcb::IMAGE_FORMAT_Z_PIXMAP as u8,
-        screen.root(),
-        0,
-        0,
-        width,
-        height,
-        0xFF_FF_FF_FF_u32,
-    ).get_reply()
-    .unwrap();
-
-    // let mut buf = File::create("out.bin").unwrap();
-    // buf.write(screenshot.data()).unwrap();
-
-    let bg = conn.generate_id();
-    xcb::create_pixmap(
-        &conn,
-        xcb::COPY_FROM_PARENT as u8,
-        bg,
-        screenshot,
-        width,
-        height,
-    );
-
     let values = [
         // ?RGB. First 4 bytes appear to do nothing
         (xcb::CW_BACK_PIXEL, 0x00_00_00_00),
-        // (xcb::CW_BACK_PIXMAP, bg),
         (
             xcb::CW_EVENT_MASK,
             xcb::EVENT_MASK_EXPOSURE
@@ -68,23 +39,6 @@ fn main() {
         screen.root_visual(),
         &values,
     );
-
-    // // Set transparency.
-    // let opacity_atom = xcb::intern_atom(&conn, false, "_NET_WM_WINDOW_OPACITY")
-    //     .get_reply()
-    //     .expect("Couldn't create atom _NET_WM_WINDOW_OPACITY")
-    //     .atom();
-    // // let opacity = u32::max_value();
-    // let opacity = 0;
-    // xcb::change_property(
-    //     &conn,
-    //     xcb::PROP_MODE_REPLACE as u8,
-    //     window,
-    //     opacity_atom,
-    //     xcb::ATOM_CARDINAL,
-    //     32,
-    //     &[opacity],
-    // );
 
     xcb::map_window(&conn, window);
 
@@ -131,27 +85,3 @@ fn main() {
     }
     // Now we have taken coordinates, we use them
 }
-
-// let vinfo: xcb::XVisualInfo;
-// unsafe {
-//     xcb::XMatchVisualInfo(conn.get_raw_dpy(), screen_num, 32, xcb::Truecolor, &vinfo);
-// }
-
-// int main(int argc, char* argv[])
-// {
-//     Display* display = XOpenDisplay(NULL);
-
-//     XVisualInfo vinfo;
-//     XMatchVisualInfo(display, DefaultScreen(display), 32, TrueColor, &vinfo);
-
-//     XSetWindowAttributes attr;
-//     attr.colormap = XCreateColormap(display, DefaultRootWindow(display), vinfo.visual, AllocNone);
-//     attr.border_pixel = 0;
-//     attr.background_pixel = 0;
-
-//     Window win = XCreateWindow(display, DefaultRootWindow(display), 0, 0, 300, 200, 0, vinfo.depth, InputOutput, vinfo.visual, CWColormap | CWBorderPixel | CWBackPixel, &attr);
-
-//     XDestroyWindow(display, win);
-//     XCloseDisplay(display);
-//     return 0;
-// }
