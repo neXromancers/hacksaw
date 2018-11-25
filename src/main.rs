@@ -70,31 +70,26 @@ fn main() {
     conn.flush();
 
     loop {
-        let ev = conn.wait_for_event();
-        match ev {
-            None => {
-                println!("Error reading events");
-                break;
+        let ev = conn.wait_for_event().unwrap();
+        match ev.response_type() {
+            xcb::BUTTON_PRESS => {
+                let button_press: &xcb::ButtonPressEvent = unsafe { xcb::cast_event(&ev) };
+                println!(
+                    "Mouse press: x={}, y={}",
+                    button_press.event_x(),
+                    button_press.event_y()
+                );
             }
-            Some(ev) => {
-                let r = ev.response_type();
-                if r == xcb::BUTTON_PRESS as u8 {
-                    let button_press: &xcb::ButtonPressEvent = unsafe { xcb::cast_event(&ev) };
-                    println!(
-                        "Mouse press: x={}, y={}",
-                        button_press.event_x(),
-                        button_press.event_y()
-                    );
-                } else if r == xcb::BUTTON_RELEASE as u8 {
-                    let button_release: &xcb::ButtonReleaseEvent = unsafe { xcb::cast_event(&ev) };
-                    println!(
-                        "Mouse release: x={}, y={}",
-                        button_release.event_x(),
-                        button_release.event_y()
-                    );
-                    break; // Move on after mouse released
-                }
+            xcb::BUTTON_RELEASE => {
+                let button_release: &xcb::ButtonReleaseEvent = unsafe { xcb::cast_event(&ev) };
+                println!(
+                    "Mouse release: x={}, y={}",
+                    button_release.event_x(),
+                    button_release.event_y()
+                );
+                break; // Move on after mouse released
             }
+            _ => continue
         };
     }
     // Now we have taken coordinates, we use them
