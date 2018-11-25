@@ -19,8 +19,8 @@ fn main() {
             xcb::CW_EVENT_MASK,
             xcb::EVENT_MASK_EXPOSURE
                 | xcb::EVENT_MASK_KEY_PRESS // we'll need this later
-                | xcb::EVENT_MASK_BUTTON_PRESS
-                | xcb::EVENT_MASK_BUTTON_RELEASE,
+                // | xcb::EVENT_MASK_BUTTON_PRESS
+                // | xcb::EVENT_MASK_BUTTON_RELEASE,
         ),
         (xcb::CW_OVERRIDE_REDIRECT, 1 as u32), // Don't be window managed
     ];
@@ -30,10 +30,10 @@ fn main() {
         xcb::COPY_FROM_PARENT as u8,
         window,
         screen.root(),
-        0,
-        0,
-        width / 2,
-        height / 2,
+        0, // x
+        0, // y
+        0, // width
+        0, // height
         0,
         xcb::WINDOW_CLASS_INPUT_OUTPUT as u16,
         screen.root_visual(),
@@ -54,12 +54,26 @@ fn main() {
         title.as_bytes(),
     );
 
+    xcb::grab_pointer(
+        &conn,
+        true,
+        screen.root(),
+        (xcb::EVENT_MASK_BUTTON_RELEASE | xcb::EVENT_MASK_BUTTON_PRESS) as u16,
+        xcb::GRAB_MODE_ASYNC as u8,
+        xcb::GRAB_MODE_ASYNC as u8,
+        xcb::NONE,
+        xcb::NONE,
+        xcb::CURRENT_TIME,
+    ).get_reply()
+    .unwrap();
+
     conn.flush();
 
     loop {
         let ev = conn.wait_for_event();
         match ev {
             None => {
+                println!("Error reading events");
                 break;
             }
             Some(ev) => {
@@ -84,4 +98,5 @@ fn main() {
         };
     }
     // Now we have taken coordinates, we use them
+    // TODO
 }
