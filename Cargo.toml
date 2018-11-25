@@ -4,4 +4,4 @@ version = "0.1.0"
 authors = ["expectocode <expectocode@gmail.com>"]
 
 [dependencies]
-xcb = {version = "0.8.2", features = ["xkb"]}
+xcb = {version = "0.8.2", features = ["xkb", "shape"]}

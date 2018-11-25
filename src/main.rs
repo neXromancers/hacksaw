@@ -1,4 +1,5 @@
 extern crate xcb;
+use xcb::shape;
 
 fn main() {
     let (conn, screen_num) = xcb::Connection::connect(None).unwrap();
@@ -70,6 +71,47 @@ fn main() {
     ).get_reply()
     .unwrap();
 
+    conn.flush();
+
+    let temp_win = conn.generate_id();
+    xcb::create_window(
+        &conn,
+        xcb::COPY_FROM_PARENT as u8,
+        temp_win,
+        screen.root(),
+        0, // x
+        0, // y
+        200, // width
+        499, // height
+        0,
+        xcb::WINDOW_CLASS_INPUT_OUTPUT as u16,
+        screen.root_visual(),
+        &[(xcb::CW_BACK_PIXEL, screen.black_pixel())],
+    );
+
+    let rects = [xcb::Rectangle::new(300, 300, 400, 300)];
+    shape::rectangles(
+        &conn,
+        shape::SO_SET as u8,
+        shape::SK_BOUNDING as u8,
+        0,
+        temp_win,
+        0,
+        0,
+        &rects,
+    );
+
+    shape::combine(
+        &conn,
+        shape::SO_SET as u8,
+        shape::SK_BOUNDING as u8,
+        shape::SK_BOUNDING as u8,
+        window,
+        0,
+        0,
+        temp_win,
+    );
+    xcb::map_window(&conn, window);
     conn.flush();
 
     // TODO formalise the fact that motion comes after press?
