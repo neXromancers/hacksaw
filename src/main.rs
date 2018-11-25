@@ -19,8 +19,6 @@ fn main() {
             xcb::CW_EVENT_MASK,
             xcb::EVENT_MASK_EXPOSURE
                 | xcb::EVENT_MASK_KEY_PRESS // we'll need this later
-                // | xcb::EVENT_MASK_BUTTON_PRESS
-                // | xcb::EVENT_MASK_BUTTON_RELEASE,
         ),
         (xcb::CW_OVERRIDE_REDIRECT, 1 as u32), // Don't be window managed
     ];
@@ -58,7 +56,9 @@ fn main() {
         &conn,
         true,
         screen.root(),
-        (xcb::EVENT_MASK_BUTTON_RELEASE | xcb::EVENT_MASK_BUTTON_PRESS) as u16,
+        (xcb::EVENT_MASK_BUTTON_RELEASE
+            | xcb::EVENT_MASK_BUTTON_PRESS
+            | xcb::EVENT_MASK_BUTTON_1_MOTION) as u16,
         xcb::GRAB_MODE_ASYNC as u8,
         xcb::GRAB_MODE_ASYNC as u8,
         xcb::NONE,
@@ -68,6 +68,13 @@ fn main() {
     .unwrap();
 
     conn.flush();
+
+    // TODO formalise the fact that motion comes after press?
+    let mut start_x = 0;
+    let mut start_y = 0;
+
+    let mut x = 0;
+    let mut y = 0;
 
     loop {
         let ev = conn.wait_for_event().unwrap();
@@ -79,6 +86,8 @@ fn main() {
                     button_press.event_x(),
                     button_press.event_y()
                 );
+                start_x = button_press.event_x();
+                start_y = button_press.event_y();
             }
             xcb::BUTTON_RELEASE => {
                 let button_release: &xcb::ButtonReleaseEvent = unsafe { xcb::cast_event(&ev) };
@@ -89,9 +98,21 @@ fn main() {
                 );
                 break; // Move on after mouse released
             }
-            _ => continue
+            xcb::MOTION_NOTIFY => {
+                let motion: &xcb::MotionNotifyEvent = unsafe { xcb::cast_event(&ev) };
+                println!(
+                    "Mouse motion: x={}, y={}",
+                    motion.event_x(),
+                    motion.event_y()
+                );
+                x = motion.event_x();
+                y = motion.event_y();
+            }
+            _ => continue,
         };
     }
     // Now we have taken coordinates, we use them
-    // TODO
+    let width = (x - start_x).abs();
+    let height = (y - start_y).abs();
+    println!("{}x{}+{}+{}", width, height, start_x, start_y);
 }
