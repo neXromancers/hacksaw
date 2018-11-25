@@ -7,6 +7,7 @@ fn main() {
 
     let window = conn.generate_id();
 
+    // TODO event handling for expose/keypress
     let values = [
         // ?RGB. First 4 bytes appear to do nothing
         (xcb::CW_BACK_PIXEL, 0x00_00_00_00),
@@ -113,6 +114,9 @@ fn main() {
                     4 => continue, // Scroll wheel up
                     _ => break,    // Move on after mouse released
                 }
+            }
+            xcb::EXPOSE => {
+                println!("expose!");
             }
             _ => continue,
         };
