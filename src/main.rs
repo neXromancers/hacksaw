@@ -80,6 +80,36 @@ struct Opt {
         help = "Thickness of selection box lines"
     )]
     select_thickness: u16,
+
+    #[structopt(
+        short = "c",
+        long = "colour",
+        default_value = "#aaaaaa",
+        parse(try_from_str = "parse_hex"),
+        help = "Colour of all drawn lines"
+    )]
+    line_colour: u32,
+}
+
+/// Parse a HTML-color-like hex input
+fn parse_hex(hex: &str) -> Result<u32, String> {
+    let hex = hex.trim_start_matches('#');
+    match hex.len() {
+        3 => Ok(
+            0x00_00_00_11 * u32::from_str_radix(&hex[2..3], 16).expect("Invalid hex")
+                + 0x00_00_11_00 * u32::from_str_radix(&hex[1..2], 16).expect("Invalid hex")
+                + 0x00_11_00_00 * u32::from_str_radix(&hex[0..1], 16).expect("Invalid hex"),
+        ),
+        6 => Ok(
+            0x00_00_00_01 * u32::from_str_radix(&hex[5..6], 16).expect("Invalid hex")
+                + 0x00_00_00_10 * u32::from_str_radix(&hex[4..5], 16).expect("Invalid hex")
+                + 0x00_00_01_00 * u32::from_str_radix(&hex[3..4], 16).expect("Invalid hex")
+                + 0x00_00_10_00 * u32::from_str_radix(&hex[2..3], 16).expect("Invalid hex")
+                + 0x00_01_00_00 * u32::from_str_radix(&hex[1..2], 16).expect("Invalid hex")
+                + 0x00_10_00_00 * u32::from_str_radix(&hex[0..1], 16).expect("Invalid hex"),
+        ),
+        _ => Err("Bad hex colour".to_string()),
+    }
 }
 
 fn main() {
@@ -87,6 +117,7 @@ fn main() {
 
     let line_width = opt.select_thickness;
     let guide_width = opt.guide_thickness;
+    let line_colour = opt.line_colour;
 
     let (conn, screen_num) = xcb::Connection::connect(None).unwrap();
     let setup = conn.get_setup();
@@ -101,7 +132,7 @@ fn main() {
     // TODO color as commandline arg
     let values = [
         // ?RGB. First 4 bytes appear to do nothing
-        (xcb::CW_BACK_PIXEL, 0x00_00_00_00),
+        (xcb::CW_BACK_PIXEL, line_colour),
         (
             xcb::CW_EVENT_MASK,
             xcb::EVENT_MASK_EXPOSURE | xcb::EVENT_MASK_KEY_PRESS, // we'll need this later
