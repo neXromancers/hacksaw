@@ -84,7 +84,7 @@ struct Opt {
     #[structopt(
         short = "c",
         long = "colour",
-        default_value = "#aaaaaa",
+        default_value = "#7f7f7f",
         parse(try_from_str = "parse_hex"),
         help = "Colour of all drawn lines"
     )]
@@ -131,7 +131,7 @@ fn main() {
             xcb::CW_EVENT_MASK,
             xcb::EVENT_MASK_EXPOSURE | xcb::EVENT_MASK_KEY_PRESS, // we'll need this later
         ),
-        (xcb::CW_OVERRIDE_REDIRECT, 1 as u32), // Don't be window managed
+        (xcb::CW_OVERRIDE_REDIRECT, 1u32), // Don't be window managed
     ];
 
     xcb::create_window(
