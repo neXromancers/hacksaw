@@ -15,7 +15,43 @@ fn set_shape(conn: &xcb::Connection, window: xcb::Window, rects: &[xcb::Rectangl
         0,
         &rects,
     );
-    conn.flush();
+}
+
+fn set_title(conn: &xcb::Connection, window: xcb::Window, title: &str) {
+    xcb::change_property(
+        &conn,
+        xcb::PROP_MODE_REPLACE as u8,
+        window,
+        xcb::ATOM_WM_NAME,
+        xcb::ATOM_STRING,
+        8,
+        title.as_bytes(),
+    );
+}
+
+fn grab_pointer_set_cursor(conn: &xcb::Connection, window: xcb::Window, screen: xcb::Screen) {
+    let font = conn.generate_id();
+    xcb::open_font(&conn, font, "cursor");
+
+    // TODO: create cursor with a Pixmap
+    // https://stackoverflow.com/questions/40578969/how-to-create-a-cursor-in-x11-from-raw-data-c
+    let cursor = conn.generate_id();
+    xcb::create_glyph_cursor(&conn, cursor, font, font, 0, 30, 0, 0, 0, 0, 0, 0);
+
+    xcb::grab_pointer(
+        &conn,
+        true,
+        screen.root(),
+        (xcb::EVENT_MASK_BUTTON_RELEASE
+            | xcb::EVENT_MASK_BUTTON_PRESS
+            | xcb::EVENT_MASK_BUTTON_MOTION) as u16,
+        xcb::GRAB_MODE_ASYNC as u8,
+        xcb::GRAB_MODE_ASYNC as u8,
+        xcb::NONE,
+        cursor,
+        xcb::CURRENT_TIME,
+    ).get_reply()
+    .unwrap();
 }
 
 fn main() {
@@ -51,40 +87,8 @@ fn main() {
         &values,
     );
 
-    let title = "hacksaw";
-    // setting title
-    xcb::change_property(
-        &conn,
-        xcb::PROP_MODE_REPLACE as u8,
-        window,
-        xcb::ATOM_WM_NAME,
-        xcb::ATOM_STRING,
-        8,
-        title.as_bytes(),
-    );
-
-    let font = conn.generate_id();
-    xcb::open_font(&conn, font, "cursor");
-
-    // TODO: create cursor with a Pixmap
-    // https://stackoverflow.com/questions/40578969/how-to-create-a-cursor-in-x11-from-raw-data-c
-    let cursor = conn.generate_id();
-    xcb::create_glyph_cursor(&conn, cursor, font, font, 0, 30, 0, 0, 0, 0, 0, 0);
-
-    xcb::grab_pointer(
-        &conn,
-        true,
-        screen.root(),
-        (xcb::EVENT_MASK_BUTTON_RELEASE
-            | xcb::EVENT_MASK_BUTTON_PRESS
-            | xcb::EVENT_MASK_BUTTON_MOTION) as u16,
-        xcb::GRAB_MODE_ASYNC as u8,
-        xcb::GRAB_MODE_ASYNC as u8,
-        xcb::NONE,
-        cursor,
-        xcb::CURRENT_TIME,
-    ).get_reply()
-    .unwrap();
+    set_title(&conn, window, "hacksaw");
+    grab_pointer_set_cursor(&conn, window, screen);
 
     set_shape(&conn, window, &[xcb::Rectangle::new(0, 0, 0, 0)]);
 
@@ -145,6 +149,7 @@ fn main() {
                     xcb::Rectangle::new(top_x, bot_y, width, LINE_WIDTH),
                 ];
                 set_shape(&conn, window, &rects);
+                conn.flush();
             }
             xcb::BUTTON_RELEASE => {
                 let motion: &xcb::ButtonReleaseEvent = unsafe { xcb::cast_event(&ev) };
