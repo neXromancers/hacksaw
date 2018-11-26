@@ -91,25 +91,19 @@ struct Opt {
     line_colour: u32,
 }
 
-/// Parse a HTML-color-like hex input
+/// Parse an HTML-color-like hex input
+// TODO alpha channel
 fn parse_hex(hex: &str) -> Result<u32, String> {
     let hex = hex.trim_start_matches('#');
-    match hex.len() {
-        3 => Ok(
-            0x00_00_00_11 * u32::from_str_radix(&hex[2..3], 16).expect("Invalid hex")
-                + 0x00_00_11_00 * u32::from_str_radix(&hex[1..2], 16).expect("Invalid hex")
-                + 0x00_11_00_00 * u32::from_str_radix(&hex[0..1], 16).expect("Invalid hex"),
-        ),
-        6 => Ok(
-            0x00_00_00_01 * u32::from_str_radix(&hex[5..6], 16).expect("Invalid hex")
-                + 0x00_00_00_10 * u32::from_str_radix(&hex[4..5], 16).expect("Invalid hex")
-                + 0x00_00_01_00 * u32::from_str_radix(&hex[3..4], 16).expect("Invalid hex")
-                + 0x00_00_10_00 * u32::from_str_radix(&hex[2..3], 16).expect("Invalid hex")
-                + 0x00_01_00_00 * u32::from_str_radix(&hex[1..2], 16).expect("Invalid hex")
-                + 0x00_10_00_00 * u32::from_str_radix(&hex[0..1], 16).expect("Invalid hex"),
-        ),
-        _ => Err("Bad hex colour".to_string()),
-    }
+    let hex_string = match hex.len() {
+        3 => hex
+            .chars()
+            .map(|c| format!("{0}{0}", c))
+            .collect::<String>(),
+        6 => hex.to_string(),
+        _ => return Err("Bad hex colour".to_string()),
+    };
+    Ok(u32::from_str_radix(&hex_string, 16).expect("Invalid char in hex colour"))
 }
 
 fn main() {
@@ -142,7 +136,7 @@ fn main() {
 
     xcb::create_window(
         &conn,
-        xcb::COPY_FROM_PARENT as u8,
+        xcb::COPY_FROM_PARENT as u8, // usually 32?
         window,
         screen.root(),
         0,          // x
