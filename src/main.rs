@@ -178,13 +178,14 @@ fn main() {
                 width = (x - start_x).abs() as u16;
                 height = (y - start_y).abs() as u16;
 
-                let mut rects = match opt.no_guides {
-                    false => vec![
+                let mut rects = match (opt.no_guides, in_selection) {
+                    (_, true) => Vec::new(),
+                    (false, _) => vec![
                         // Guides
                         xcb::Rectangle::new(x, 0, guide_width, scr_height),
                         xcb::Rectangle::new(0, y, scr_width, guide_width),
                     ],
-                    true => Vec::new(),
+                    (true, _) => Vec::new(),
                 };
 
                 if in_selection {
