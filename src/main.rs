@@ -29,7 +29,7 @@ fn set_title(conn: &xcb::Connection, window: xcb::Window, title: &str) {
     );
 }
 
-fn grab_pointer_set_cursor(conn: &xcb::Connection, screen: xcb::Screen) {
+fn grab_pointer_set_cursor(conn: &xcb::Connection, root: u32) {
     let font = conn.generate_id();
     xcb::open_font(&conn, font, "cursor");
 
@@ -41,7 +41,7 @@ fn grab_pointer_set_cursor(conn: &xcb::Connection, screen: xcb::Screen) {
     xcb::grab_pointer(
         &conn,
         true,
-        screen.root(),
+        root,
         (xcb::EVENT_MASK_BUTTON_RELEASE
             | xcb::EVENT_MASK_BUTTON_PRESS
             | xcb::EVENT_MASK_BUTTON_MOTION
@@ -58,7 +58,11 @@ fn grab_pointer_set_cursor(conn: &xcb::Connection, screen: xcb::Screen) {
 #[derive(StructOpt, Debug)]
 #[structopt(name = "hacksaw")]
 struct Opt {
-    #[structopt(short = "ng", long = "no-guides", help = "Disable fighter pilot guide lines")]
+    #[structopt(
+        short = "n",
+        long = "no-guides",
+        help = "Disable fighter pilot guide lines"
+    )]
     no_guides: bool,
 
     #[structopt(
@@ -121,7 +125,7 @@ fn main() {
     );
 
     set_title(&conn, window, "hacksaw");
-    grab_pointer_set_cursor(&conn, screen);
+    grab_pointer_set_cursor(&conn, screen.root());
 
     set_shape(&conn, window, &[xcb::Rectangle::new(0, 0, 0, 0)]);
 
