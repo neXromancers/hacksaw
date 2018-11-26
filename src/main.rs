@@ -1,5 +1,22 @@
 extern crate xcb;
+use std::cmp::{max, min};
 use xcb::shape;
+
+const LINE_WIDTH: u16 = 3;
+
+fn set_shape(conn: &xcb::Connection, window: xcb::Window, rects: &[xcb::Rectangle]) {
+    shape::rectangles(
+        &conn,
+        shape::SO_SET as u8,
+        shape::SK_BOUNDING as u8,
+        0,
+        window,
+        0,
+        0,
+        &rects,
+    );
+    conn.flush();
+}
 
 fn main() {
     let (conn, screen_num) = xcb::Connection::connect(None).unwrap();
@@ -24,17 +41,15 @@ fn main() {
         xcb::COPY_FROM_PARENT as u8,
         window,
         screen.root(),
-        0, // x
-        0, // y
-        0, // width
-        0, // height
+        0,                         // x
+        0,                         // y
+        screen.width_in_pixels(),  // width
+        screen.height_in_pixels(), // height
         0,
         xcb::WINDOW_CLASS_INPUT_OUTPUT as u16,
         screen.root_visual(),
         &values,
     );
-
-    xcb::map_window(&conn, window);
 
     let title = "hacksaw";
     // setting title
@@ -71,47 +86,10 @@ fn main() {
     ).get_reply()
     .unwrap();
 
-    conn.flush();
+    set_shape(&conn, window, &[xcb::Rectangle::new(0, 0, 0, 0)]);
 
-    let temp_win = conn.generate_id();
-    xcb::create_window(
-        &conn,
-        xcb::COPY_FROM_PARENT as u8,
-        temp_win,
-        screen.root(),
-        0, // x
-        0, // y
-        200, // width
-        499, // height
-        0,
-        xcb::WINDOW_CLASS_INPUT_OUTPUT as u16,
-        screen.root_visual(),
-        &[(xcb::CW_BACK_PIXEL, screen.black_pixel())],
-    );
-
-    let rects = [xcb::Rectangle::new(300, 300, 400, 300)];
-    shape::rectangles(
-        &conn,
-        shape::SO_SET as u8,
-        shape::SK_BOUNDING as u8,
-        0,
-        temp_win,
-        0,
-        0,
-        &rects,
-    );
-
-    shape::combine(
-        &conn,
-        shape::SO_SET as u8,
-        shape::SK_BOUNDING as u8,
-        shape::SK_BOUNDING as u8,
-        window,
-        0,
-        0,
-        temp_win,
-    );
     xcb::map_window(&conn, window);
+
     conn.flush();
 
     // TODO formalise the fact that motion comes after press?
@@ -120,6 +98,9 @@ fn main() {
 
     let mut x = 0;
     let mut y = 0;
+
+    let mut width = 0;
+    let mut height = 0;
 
     loop {
         let ev = conn.wait_for_event().unwrap();
@@ -147,7 +128,23 @@ fn main() {
                 let motion: &xcb::MotionNotifyEvent = unsafe { xcb::cast_event(&ev) };
                 x = motion.event_x();
                 y = motion.event_y();
-                // TODO draw rectangles (and guides)
+
+                // TODO investigate efficiency of let mut outside loop vs let inside
+                let top_x = min(x, start_x);
+                let top_y = min(y, start_y);
+                let bot_x = max(x, start_x);
+                let bot_y = max(y, start_y);
+
+                width = (x - start_x).abs() as u16;
+                height = (y - start_y).abs() as u16;
+
+                let rects = [
+                    xcb::Rectangle::new(top_x, top_y, LINE_WIDTH, height),
+                    xcb::Rectangle::new(top_x, top_y, width, LINE_WIDTH),
+                    xcb::Rectangle::new(bot_x, top_y, LINE_WIDTH, height),
+                    xcb::Rectangle::new(top_x, bot_y, width, LINE_WIDTH),
+                ];
+                set_shape(&conn, window, &rects);
             }
             xcb::BUTTON_RELEASE => {
                 let motion: &xcb::ButtonReleaseEvent = unsafe { xcb::cast_event(&ev) };
@@ -157,15 +154,14 @@ fn main() {
                     _ => break,    // Move on after mouse released
                 }
             }
-            xcb::EXPOSE => {
-                println!("expose!");
-            }
             _ => continue,
         };
     }
 
+    // set_shape(&conn, window, &[xcb::Rectangle::new(0, 0, 0, 0)]);
+    // xcb::unmap_window(&conn, window);
+    // TODO aaaah black flashes
+
     // Now we have taken coordinates, we use them
-    let width = (x - start_x).abs();
-    let height = (y - start_y).abs();
     println!("{}x{}+{}+{}", width, height, start_x, start_y);
 }
