@@ -86,7 +86,7 @@ struct Opt {
         long = "colour",
         default_value = "#7f7f7f",
         parse(try_from_str = "parse_hex"),
-        help = "Colour of all drawn lines"
+        help = "Hex colour of the lines, '#' optional"
     )]
     line_colour: u32,
 }
@@ -95,15 +95,17 @@ struct Opt {
 // TODO alpha channel
 fn parse_hex(hex: &str) -> Result<u32, String> {
     let hex = hex.trim_start_matches('#');
-    let hex_string = match hex.len() {
-        3 => hex
-            .chars()
-            .map(|c| format!("{0}{0}", c))
-            .collect::<String>(),
-        6 => hex.to_string(),
-        _ => return Err("Bad hex colour".to_string()),
-    };
-    Ok(u32::from_str_radix(&hex_string, 16).expect("Invalid char in hex colour"))
+    match hex.len() {
+        3 => Ok(
+            0x00_00_00_11 * u32::from_str_radix(&hex[2..3], 16).expect("Invalid hex")
+                + 0x00_00_11_00 * u32::from_str_radix(&hex[1..2], 16).expect("Invalid hex")
+                + 0x00_11_00_00 * u32::from_str_radix(&hex[0..1], 16).expect("Invalid hex"),
+        ),
+        6 => Ok(
+            u32::from_str_radix(&hex, 16).expect("Invalid hex"),
+        ),
+        _ => Err("Bad hex colour".to_string()),
+    }
 }
 
 fn main() {
@@ -118,6 +120,8 @@ fn main() {
     let screen = setup.roots().nth(screen_num as usize).unwrap();
 
     let window = conn.generate_id();
+
+    grab_pointer_set_cursor(&conn, screen.root());
 
     let scr_height = screen.height_in_pixels();
     let scr_width = screen.width_in_pixels();
@@ -150,7 +154,6 @@ fn main() {
     );
 
     set_title(&conn, window, "hacksaw");
-    grab_pointer_set_cursor(&conn, screen.root());
 
     set_shape(&conn, window, &[xcb::Rectangle::new(0, 0, 0, 0)]);
 
