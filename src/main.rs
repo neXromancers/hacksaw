@@ -76,7 +76,7 @@ struct Opt {
     #[structopt(
         short = "s",
         long = "select-thickness",
-        default_value = "2",
+        default_value = "1",
         help = "Thickness of selection box lines"
     )]
     select_thickness: u16,
@@ -178,28 +178,24 @@ fn main() {
                 width = (x - start_x).abs() as u16;
                 height = (y - start_y).abs() as u16;
 
+                // TODO consider how these overlap with the actual geometry - do they need
+                // offsetting?
                 let mut rects = match (opt.no_guides, in_selection) {
-                    (_, true) => Vec::new(),
-                    (false, _) => vec![
-                        // Guides
-                        xcb::Rectangle::new(x, 0, guide_width, scr_height),
-                        xcb::Rectangle::new(0, y, scr_width, guide_width),
-                    ],
-                    (true, _) => Vec::new(),
-                };
-
-                if in_selection {
-                    // Selection lines
-                    // TODO consider how these overlap with the actual geometry - do they need
-                    // offsetting?
-                    rects.extend_from_slice(&[
+                    (_, true) => vec![
+                        // Selection rectangle
+                        // The last one is longer to compensate for the missing square
                         xcb::Rectangle::new(top_x, top_y, line_width, height),
                         xcb::Rectangle::new(top_x, top_y, width, line_width),
                         xcb::Rectangle::new(bot_x, top_y, line_width, height),
                         xcb::Rectangle::new(top_x, bot_y, width + line_width, line_width),
-                        // The last one is longer to compensate for the missing square
-                    ]);
-                }
+                    ],
+                    (false, false) => vec![
+                        // Guides
+                        xcb::Rectangle::new(x, 0, guide_width, scr_height),
+                        xcb::Rectangle::new(0, y, scr_width, guide_width),
+                    ],
+                    (true, false) => vec![],
+                };
 
                 set_shape(&conn, window, &rects);
                 conn.flush();
