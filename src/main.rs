@@ -58,13 +58,23 @@ fn grab_pointer_set_cursor(conn: &xcb::Connection, screen: xcb::Screen) {
 #[derive(StructOpt, Debug)]
 #[structopt(name = "hacksaw")]
 struct Opt {
-    #[structopt(short = "ng", long = "no-guides")]
+    #[structopt(short = "ng", long = "no-guides", help = "Disable fighter pilot guide lines")]
     no_guides: bool,
 
-    #[structopt(short = "gt", long = "guide-thickness", default_value = "1")]
+    #[structopt(
+        short = "g",
+        long = "guide-thickness",
+        default_value = "1",
+        help = "Thickness of fighter pilot guide lines"
+    )]
     guide_thickness: u16,
 
-    #[structopt(short = "st", long = "select-thickness", default_value = "2")]
+    #[structopt(
+        short = "s",
+        long = "select-thickness",
+        default_value = "2",
+        help = "Thickness of selection box lines"
+    )]
     select_thickness: u16,
 }
 
