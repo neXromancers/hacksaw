@@ -162,11 +162,14 @@ fn main() {
 
                 if in_selection {
                     // Selection lines
+                    // TODO consider how these overlap with the actual geometry - do they need
+                    // offsetting?
                     rects.extend_from_slice(&[
-                        xcb::Rectangle::new(top_x, top_y, LINE_WIDTH, height),
-                        xcb::Rectangle::new(top_x, top_y, width, LINE_WIDTH),
-                        xcb::Rectangle::new(bot_x, top_y, LINE_WIDTH, height),
-                        xcb::Rectangle::new(top_x, bot_y, width, LINE_WIDTH),
+                        xcb::Rectangle::new(top_x, top_y, line_width, height),
+                        xcb::Rectangle::new(top_x, top_y, width, line_width),
+                        xcb::Rectangle::new(bot_x, top_y, line_width, height),
+                        xcb::Rectangle::new(top_x, bot_y, width + line_width, line_width),
+                        // The last one is longer to compensate for the missing square
                     ]);
                 }
 
