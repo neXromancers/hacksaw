@@ -3,6 +3,9 @@ name = "hacksaw"
 version = "0.1.0"
 authors = ["expectocode <expectocode@gmail.com>"]
 
+[dependencies]
+structopt = "0.2"
+
 [dependencies.xcb]
 version = "0.8.2"
 features = ["xkb", "shape"]

@@ -1,9 +1,8 @@
+extern crate structopt;
 extern crate xcb;
 use std::cmp::{max, min};
+use structopt::StructOpt;
 use xcb::shape;
-
-const LINE_WIDTH: u16 = 2;
-const GUIDE_WIDTH: u16 = 1;
 
 fn set_shape(conn: &xcb::Connection, window: xcb::Window, rects: &[xcb::Rectangle]) {
     shape::rectangles(
@@ -30,7 +29,7 @@ fn set_title(conn: &xcb::Connection, window: xcb::Window, title: &str) {
     );
 }
 
-fn grab_pointer_set_cursor(conn: &xcb::Connection, window: xcb::Window, screen: xcb::Screen) {
+fn grab_pointer_set_cursor(conn: &xcb::Connection, screen: xcb::Screen) {
     let font = conn.generate_id();
     xcb::open_font(&conn, font, "cursor");
 
@@ -56,8 +55,25 @@ fn grab_pointer_set_cursor(conn: &xcb::Connection, window: xcb::Window, screen: 
     .unwrap();
 }
 
+#[derive(StructOpt, Debug)]
+#[structopt(name = "hacksaw")]
+struct Opt {
+    #[structopt(short = "ng", long = "no-guides")]
+    no_guides: bool,
+
+    #[structopt(short = "gt", long = "guide-thickness", default_value = "1")]
+    guide_thickness: u16,
+
+    #[structopt(short = "st", long = "select-thickness", default_value = "2")]
+    select_thickness: u16,
+}
+
 fn main() {
-    // TODO commandline options
+    let opt = Opt::from_args();
+
+    let line_width = opt.select_thickness;
+    let guide_width = opt.guide_thickness;
+
     let (conn, screen_num) = xcb::Connection::connect(None).unwrap();
     let setup = conn.get_setup();
     let screen = setup.roots().nth(screen_num as usize).unwrap();
@@ -68,6 +84,7 @@ fn main() {
     let scr_width = screen.width_in_pixels();
 
     // TODO event handling for expose/keypress
+    // TODO color as commandline arg
     let values = [
         // ?RGB. First 4 bytes appear to do nothing
         (xcb::CW_BACK_PIXEL, 0x00_00_00_00),
@@ -94,7 +111,7 @@ fn main() {
     );
 
     set_title(&conn, window, "hacksaw");
-    grab_pointer_set_cursor(&conn, window, screen);
+    grab_pointer_set_cursor(&conn, screen);
 
     set_shape(&conn, window, &[xcb::Rectangle::new(0, 0, 0, 0)]);
 
@@ -105,9 +122,6 @@ fn main() {
     // TODO formalise the fact that motion comes after press?
     let mut start_x = 0;
     let mut start_y = 0;
-
-    let mut x = 0;
-    let mut y = 0;
 
     let mut width = 0;
     let mut height = 0;
@@ -128,10 +142,6 @@ fn main() {
                 start_x = button_press.event_x();
                 start_y = button_press.event_y();
 
-                // For the case where there is no motion
-                x = start_x;
-                y = start_y;
-
                 in_selection = true;
             }
             xcb::KEY_PRESS => {
@@ -142,8 +152,8 @@ fn main() {
             }
             xcb::MOTION_NOTIFY => {
                 let motion: &xcb::MotionNotifyEvent = unsafe { xcb::cast_event(&ev) };
-                x = motion.event_x();
-                y = motion.event_y();
+                let x = motion.event_x();
+                let y = motion.event_y();
 
                 // TODO investigate efficiency of let mut outside loop vs let inside
                 let top_x = min(x, start_x);
@@ -154,11 +164,14 @@ fn main() {
                 width = (x - start_x).abs() as u16;
                 height = (y - start_y).abs() as u16;
 
-                let mut rects = vec![
-                    // Guides
-                    xcb::Rectangle::new(x, 0, GUIDE_WIDTH, scr_height),
-                    xcb::Rectangle::new(0, y, scr_width, GUIDE_WIDTH),
-                ];
+                let mut rects = match opt.no_guides {
+                    false => vec![
+                        // Guides
+                        xcb::Rectangle::new(x, 0, guide_width, scr_height),
+                        xcb::Rectangle::new(0, y, scr_width, guide_width),
+                    ],
+                    true => Vec::new(),
+                };
 
                 if in_selection {
                     // Selection lines
@@ -187,7 +200,6 @@ fn main() {
             _ => continue,
         };
     }
-
     // Now we have taken coordinates, we use them
     println!("{}x{}+{}+{}", width, height, start_x, start_y);
 }
