@@ -158,10 +158,6 @@ fn main() {
         };
     }
 
-    // set_shape(&conn, window, &[xcb::Rectangle::new(0, 0, 0, 0)]);
-    // xcb::unmap_window(&conn, window);
-    // TODO aaaah black flashes
-
     // Now we have taken coordinates, we use them
     println!("{}x{}+{}+{}", width, height, start_x, start_y);
 }
