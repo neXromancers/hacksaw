@@ -2,7 +2,8 @@ extern crate xcb;
 use std::cmp::{max, min};
 use xcb::shape;
 
-const LINE_WIDTH: u16 = 3;
+const LINE_WIDTH: u16 = 2;
+const GUIDE_WIDTH: u16 = 1;
 
 fn set_shape(conn: &xcb::Connection, window: xcb::Window, rects: &[xcb::Rectangle]) {
     shape::rectangles(
@@ -44,7 +45,8 @@ fn grab_pointer_set_cursor(conn: &xcb::Connection, window: xcb::Window, screen: 
         screen.root(),
         (xcb::EVENT_MASK_BUTTON_RELEASE
             | xcb::EVENT_MASK_BUTTON_PRESS
-            | xcb::EVENT_MASK_BUTTON_MOTION) as u16,
+            | xcb::EVENT_MASK_BUTTON_MOTION
+            | xcb::EVENT_MASK_POINTER_MOTION) as u16,
         xcb::GRAB_MODE_ASYNC as u8,
         xcb::GRAB_MODE_ASYNC as u8,
         xcb::NONE,
@@ -55,11 +57,15 @@ fn grab_pointer_set_cursor(conn: &xcb::Connection, window: xcb::Window, screen: 
 }
 
 fn main() {
+    // TODO commandline options
     let (conn, screen_num) = xcb::Connection::connect(None).unwrap();
     let setup = conn.get_setup();
     let screen = setup.roots().nth(screen_num as usize).unwrap();
 
     let window = conn.generate_id();
+
+    let scr_height = screen.height_in_pixels();
+    let scr_width = screen.width_in_pixels();
 
     // TODO event handling for expose/keypress
     let values = [
@@ -77,10 +83,10 @@ fn main() {
         xcb::COPY_FROM_PARENT as u8,
         window,
         screen.root(),
-        0,                         // x
-        0,                         // y
-        screen.width_in_pixels(),  // width
-        screen.height_in_pixels(), // height
+        0,          // x
+        0,          // y
+        scr_width,  // width
+        scr_height, // height
         0,
         xcb::WINDOW_CLASS_INPUT_OUTPUT as u16,
         screen.root_visual(),
@@ -106,6 +112,8 @@ fn main() {
     let mut width = 0;
     let mut height = 0;
 
+    let mut in_selection = false;
+
     loop {
         let ev = conn.wait_for_event().unwrap();
         match ev.response_type() {
@@ -123,8 +131,12 @@ fn main() {
                 // For the case where there is no motion
                 x = start_x;
                 y = start_y;
+
+                in_selection = true;
             }
             xcb::KEY_PRESS => {
+                // TODO fix this by grabbing keyboard
+                // TODO only quit on Esc and similar
                 println!("Exiting due to key press");
                 return;
             }
@@ -142,12 +154,22 @@ fn main() {
                 width = (x - start_x).abs() as u16;
                 height = (y - start_y).abs() as u16;
 
-                let rects = [
-                    xcb::Rectangle::new(top_x, top_y, LINE_WIDTH, height),
-                    xcb::Rectangle::new(top_x, top_y, width, LINE_WIDTH),
-                    xcb::Rectangle::new(bot_x, top_y, LINE_WIDTH, height),
-                    xcb::Rectangle::new(top_x, bot_y, width, LINE_WIDTH),
+                let mut rects = vec![
+                    // Guides
+                    xcb::Rectangle::new(x, 0, GUIDE_WIDTH, scr_height),
+                    xcb::Rectangle::new(0, y, scr_width, GUIDE_WIDTH),
                 ];
+
+                if in_selection {
+                    // Selection lines
+                    rects.extend_from_slice(&[
+                        xcb::Rectangle::new(top_x, top_y, LINE_WIDTH, height),
+                        xcb::Rectangle::new(top_x, top_y, width, LINE_WIDTH),
+                        xcb::Rectangle::new(bot_x, top_y, LINE_WIDTH, height),
+                        xcb::Rectangle::new(top_x, bot_y, width, LINE_WIDTH),
+                    ]);
+                }
+
                 set_shape(&conn, window, &rects);
                 conn.flush();
             }
