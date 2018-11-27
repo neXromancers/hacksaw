@@ -214,24 +214,37 @@ fn main() {
                 let y = motion.event_y();
 
                 // TODO investigate efficiency of let mut outside loop vs let inside
-                let top_x = min(x, start_x);
+                let left_x = min(x, start_x);
                 let top_y = min(y, start_y);
-                let bot_x = max(x, start_x);
+                let right_x = max(x, start_x);
                 let bot_y = max(y, start_y);
 
                 width = (x - start_x).abs() as u16;
                 height = (y - start_y).abs() as u16;
 
-                // TODO consider how these overlap with the actual geometry - do they need
-                // offsetting?
                 let mut rects = match (opt.no_guides, in_selection) {
                     (_, true) => vec![
                         // Selection rectangle
                         // The last one is longer to compensate for the missing square
-                        xcb::Rectangle::new(top_x, top_y, line_width, height),
-                        xcb::Rectangle::new(top_x, top_y, width, line_width),
-                        xcb::Rectangle::new(bot_x, top_y, line_width, height),
-                        xcb::Rectangle::new(top_x, bot_y, width + line_width, line_width),
+                        xcb::Rectangle::new(
+                            left_x - line_width as i16,
+                            top_y,
+                            line_width,
+                            height + line_width,
+                        ),
+                        xcb::Rectangle::new(
+                            left_x - line_width as i16,
+                            top_y - line_width as i16,
+                            width + line_width,
+                            line_width,
+                        ),
+                        xcb::Rectangle::new(
+                            right_x as i16,
+                            top_y - line_width as i16,
+                            line_width,
+                            height + line_width,
+                        ),
+                        xcb::Rectangle::new(left_x, bot_y, width + line_width, line_width),
                     ],
                     (false, false) => vec![
                         // Guides
