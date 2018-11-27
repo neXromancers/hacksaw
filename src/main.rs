@@ -92,20 +92,36 @@ struct Opt {
 }
 
 /// Parse an HTML-color-like hex input
-// TODO alpha channel
 fn parse_hex(hex: &str) -> Result<u32, String> {
     let hex = hex.trim_start_matches('#');
+
+    let mut color;
+
     match hex.len() {
-        3 => Ok(
-            0x00_00_00_11 * u32::from_str_radix(&hex[2..3], 16).expect("Invalid hex")
-                + 0x00_00_11_00 * u32::from_str_radix(&hex[1..2], 16).expect("Invalid hex")
-                + 0x00_11_00_00 * u32::from_str_radix(&hex[0..1], 16).expect("Invalid hex"),
-        ),
-        6 => Ok(
-            u32::from_str_radix(&hex, 16).expect("Invalid hex"),
-        ),
-        _ => Err("Bad hex colour".to_string()),
+        3 | 4 => {
+            color = 0x11_00 * u32::from_str_radix(&hex[2..3], 16).expect("Invalid hex")
+                + 0x11_00_00 * u32::from_str_radix(&hex[1..2], 16).expect("Invalid hex")
+                + 0x11_00_00_00 * u32::from_str_radix(&hex[0..1], 16).expect("Invalid hex");
+
+            if hex.len() == 4 {
+                color |= 0x11 * u32::from_str_radix(&hex[3..4], 16).expect("Invalid hex");
+            } else {
+                color |= 0xFF;
+            }
+        }
+
+        6 | 8 => {
+            color = u32::from_str_radix(&hex, 16).expect("Invalid hex");
+
+            if hex.len() == 6 {
+                color = color << 8 | 0xFF;
+            }
+        }
+
+        _ => return Err("Bad hex colour".to_string()),
     }
+
+    Ok(color)
 }
 
 fn main() {
