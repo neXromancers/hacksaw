@@ -143,7 +143,6 @@ fn main() {
     let scr_width = screen.width_in_pixels();
 
     // TODO event handling for expose/keypress
-    // TODO color as commandline arg
     let values = [
         // ?RGB. First 4 bytes appear to do nothing
         (xcb::CW_BACK_PIXEL, line_colour),
@@ -185,6 +184,7 @@ fn main() {
     let mut height = 0;
 
     let mut in_selection = false;
+    let mut ignore_next_release = false;
 
     loop {
         let ev = conn.wait_for_event().unwrap();
@@ -192,15 +192,18 @@ fn main() {
             xcb::BUTTON_PRESS => {
                 let button_press: &xcb::ButtonPressEvent = unsafe { xcb::cast_event(&ev) };
 
-                if button_press.detail() == 3 {
+                let detail = button_press.detail();
+                if detail == 3 {
                     println!("Exiting due to right click");
                     return;
+                } else {
+                    set_shape(&conn, window, &[]);
+                    conn.flush();
+                    start_x = button_press.event_x();
+                    start_y = button_press.event_y();
+                    in_selection = !(detail == 4 || detail == 5);
+                    ignore_next_release = detail == 4 || detail == 5;
                 }
-
-                start_x = button_press.event_x();
-                start_y = button_press.event_y();
-
-                in_selection = true;
             }
             xcb::KEY_PRESS => {
                 // TODO fix this by grabbing keyboard
@@ -259,15 +262,20 @@ fn main() {
             }
             xcb::BUTTON_RELEASE => {
                 let motion: &xcb::ButtonReleaseEvent = unsafe { xcb::cast_event(&ev) };
-                match motion.detail() {
-                    5 => continue, // Scroll wheel down
-                    4 => continue, // Scroll wheel up
-                    _ => break,    // Move on after mouse released
+                let detail = motion.detail();
+                if detail == 4 || detail == 5 {
+                    continue; // Scroll wheel up/down release
+                } else if ignore_next_release {
+                    ignore_next_release = false;
+                    continue;
+                } else {
+                    break;
                 }
+                // Move on after mouse released
             }
             _ => continue,
         };
     }
-    // Now we have taken coordinates, we use them
+    // Now we have taken coordinates, we print them out
     println!("{}x{}+{}+{}", width, height, start_x, start_y);
 }

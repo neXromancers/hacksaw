@@ -12,6 +12,7 @@
   - *(tiling wm exclusive)* you can still navigate windows while in hacksaw
 - select with any mouse button, not just left click!
   - except right click, that's cancel
+  - restart selection by scrolling scrollwheel
 - you can customise the *colour* and **width** of the lines
   - and you can customise the width of selection and guide lines **separately**!
 - did i mention it's written in **RUST**
