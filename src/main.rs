@@ -86,7 +86,7 @@ struct Opt {
         long = "colour",
         default_value = "#7f7f7f",
         parse(try_from_str = "parse_hex"),
-        help = "Hex colour of the lines (RGB or ARGB), '#' optional"
+        help = "Hex colour of the lines (RGB or RGBA), '#' optional"
     )]
     line_colour: u32,
 }
