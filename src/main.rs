@@ -1,6 +1,5 @@
 extern crate structopt;
 extern crate xcb;
-use std::cmp::{max, min};
 use structopt::StructOpt;
 use xcb::shape;
 
@@ -217,10 +216,10 @@ fn main() {
                 let y = motion.event_y();
 
                 // TODO investigate efficiency of let mut outside loop vs let inside
-                let left_x = min(x, start_x);
-                let top_y = min(y, start_y);
-                let right_x = max(x, start_x);
-                let bot_y = max(y, start_y);
+                let left_x = x.min(start_x);
+                let top_y = y.min(start_y);
+                let right_x = x.max(start_x);
+                let bot_y = y.max(start_y);
 
                 width = (x - start_x).abs() as u16;
                 height = (y - start_y).abs() as u16;
