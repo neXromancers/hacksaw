@@ -99,14 +99,14 @@ fn parse_hex(hex: &str) -> Result<u32, String> {
 
     match hex.len() {
         3 | 4 => {
-            color = 0x11_00 * u32::from_str_radix(&hex[2..3], 16).expect("Invalid hex")
-                + 0x11_00_00 * u32::from_str_radix(&hex[1..2], 16).expect("Invalid hex")
-                + 0x11_00_00_00 * u32::from_str_radix(&hex[0..1], 16).expect("Invalid hex");
+            color = 0x11 * u32::from_str_radix(&hex[2..3], 16).expect("Invalid hex")
+                + 0x11_00 * u32::from_str_radix(&hex[1..2], 16).expect("Invalid hex")
+                + 0x11_00_00 * u32::from_str_radix(&hex[0..1], 16).expect("Invalid hex");
 
             if hex.len() == 4 {
-                color |= 0x11 * u32::from_str_radix(&hex[3..4], 16).expect("Invalid hex");
+                color |= 0x11_00_00_00 * u32::from_str_radix(&hex[3..4], 16).expect("Invalid hex");
             } else {
-                color |= 0xFF;
+                color |= 0xFF_00_00_00;
             }
         }
 
@@ -114,7 +114,7 @@ fn parse_hex(hex: &str) -> Result<u32, String> {
             color = u32::from_str_radix(&hex, 16).expect("Invalid hex");
 
             if hex.len() == 6 {
-                color = color << 8 | 0xFF;
+                color = color | 0xFF_00_00_00;
             }
         }
 
