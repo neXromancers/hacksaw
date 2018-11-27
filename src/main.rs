@@ -248,8 +248,8 @@ fn main() {
                     ],
                     (false, false) => vec![
                         // Guides
-                        xcb::Rectangle::new(x, 0, guide_width, scr_height),
-                        xcb::Rectangle::new(0, y, scr_width, guide_width),
+                        xcb::Rectangle::new(x - guide_width as i16 / 2, 0, guide_width, scr_height),
+                        xcb::Rectangle::new(0, y - guide_width as i16 / 2, scr_width, guide_width),
                     ],
                     (true, false) => vec![],
                 };
