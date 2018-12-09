@@ -175,7 +175,6 @@ fn main() {
 
     conn.flush();
 
-    // TODO formalise the fact that motion comes after press?
     let mut start_x = 0;
     let mut start_y = 0;
 
@@ -227,7 +226,6 @@ fn main() {
                 let mut rects = match (opt.no_guides, in_selection) {
                     (_, true) => vec![
                         // Selection rectangle
-                        // The last one is longer to compensate for the missing square
                         xcb::Rectangle::new(
                             left_x - line_width as i16,
                             top_y,
