@@ -1,3 +1,4 @@
+#[macro_use]
 extern crate structopt;
 extern crate xcb;
 use structopt::StructOpt;
@@ -92,7 +93,7 @@ struct Opt {
 
 /// Parse an HTML-color-like hex input
 fn parse_hex(hex: &str) -> Result<u32, String> {
-    let hex = hex.trim_start_matches('#');
+    let hex = hex.trim_left_matches('#');
 
     let mut color;
 
