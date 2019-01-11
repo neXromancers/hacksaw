@@ -18,4 +18,5 @@
 - did i mention it's written in **RUST**
 - *lightweight and fast*
   - not that i've actually run any performance comparisons to slop
+- [one of Thor's favorites](https://xkcd.com/2097/)
 - built for the most *advanced* and *cutting edge* platform of today, ***X11***
