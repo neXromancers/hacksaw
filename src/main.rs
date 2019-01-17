@@ -51,7 +51,8 @@ fn grab_pointer_set_cursor(conn: &xcb::Connection, root: u32) {
         xcb::NONE,
         cursor,
         xcb::CURRENT_TIME,
-    ).get_reply()
+    )
+    .get_reply()
     .unwrap();
 }
 
