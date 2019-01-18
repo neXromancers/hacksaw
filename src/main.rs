@@ -186,6 +186,7 @@ fn main() {
     let mut in_selection = false;
     let mut ignore_next_release = false;
 
+    // TODO start drawing guides even before first event, without excess duplication
     loop {
         let ev = conn.wait_for_event().unwrap();
         match ev.response_type() {
