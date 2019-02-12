@@ -180,6 +180,11 @@ fn main() {
     let mut start_x = 0;
     let mut start_y = 0;
 
+    let mut top_y = 0;
+    let mut left_x = 0;
+    let mut right_x;
+    let mut bot_y;
+
     let mut width = 0;
     let mut height = 0;
 
@@ -218,10 +223,10 @@ fn main() {
                 let y = motion.event_y();
 
                 // TODO investigate efficiency of let mut outside loop vs let inside
-                let left_x = x.min(start_x);
-                let top_y = y.min(start_y);
-                let right_x = x.max(start_x);
-                let bot_y = y.max(start_y);
+                left_x = x.min(start_x);
+                top_y = y.min(start_y);
+                right_x = x.max(start_x);
+                bot_y = y.max(start_y);
 
                 width = (x - start_x).abs() as u16;
                 height = (y - start_y).abs() as u16;
@@ -277,5 +282,5 @@ fn main() {
         };
     }
     // Now we have taken coordinates, we print them out
-    println!("{}x{}+{}+{}", width, height, start_x, start_y);
+    println!("{}x{}+{}+{}", width, height, left_x, top_y);
 }
