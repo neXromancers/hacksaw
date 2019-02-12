@@ -56,6 +56,38 @@ fn grab_pointer_set_cursor(conn: &xcb::Connection, root: u32) {
     .unwrap();
 }
 
+fn contained(x: i16, y: i16, width: i16, height: i16, p_x: i16, p_y: i16) -> bool {
+    // TODO negative x/y offsets from bottom or right?
+    x < p_x && y < p_y && p_x - x <= width && p_y - y <= height
+}
+
+fn get_window_at_point(conn: &xcb::Connection, win: xcb::Window, x: u32, y: u32) {
+    let tree = xcb::query_tree(conn, win).get_reply().unwrap();
+    println!("win id {}", win);
+    println!("num children: {}", tree.children_len());
+    for &child in tree.children() {
+        let attrs = xcb::get_window_attributes(conn, child).get_reply().unwrap();
+        let viewable = (attrs.map_state() & xcb::MAP_STATE_VIEWABLE as u8) != 0;
+        if !viewable {
+            continue;
+        }
+        let geom = xcb::get_geometry(conn, child).get_reply().unwrap();
+        let (gx, gy, gw, gh): (i16, i16, u16, u16) =
+            (geom.x(), geom.y(), geom.width(), geom.height());
+        if !contained(
+            geom.x(),
+            geom.y(),
+            geom.width() as i16,
+            geom.height() as i16,
+            x as i16,
+            y as i16,
+        ) {
+            continue;
+        };
+        println!("child geom: {}x{}+{}+{}, id {}", gw, gh, gx, gy, child);
+    }
+}
+
 #[derive(StructOpt, Debug)]
 #[structopt(name = "hacksaw")]
 struct Opt {
@@ -280,6 +312,11 @@ fn main() {
             }
             _ => continue,
         };
+    }
+    if width == 0 && height == 0 {
+        // Grab window under cursor
+        get_window_at_point(&conn, screen.root(), start_x as u32, start_y as u32);
+        get_window_at_point(&conn, 2097153, start_x as u32, start_y as u32);
     }
     // Now we have taken coordinates, we print them out
     println!("{}x{}+{}+{}", width, height, left_x, top_y);
