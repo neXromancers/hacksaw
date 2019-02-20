@@ -4,6 +4,12 @@
 
 ![screencast](https://user-images.githubusercontent.com/15344581/49049792-67b5d580-f1d8-11e8-871c-74fc8cc72d96.gif)
 
+### Installation:
+
+`cargo install --git https://github.com/neXromancers/hacksaw`
+
+(crates.io coming soon)
+
 ### Features:
 - **Guide Lines** to check precise positions and line up before you start a selection
   - just like the popular [Guides](https://github.com/udf/slop-guides) shader for slop
