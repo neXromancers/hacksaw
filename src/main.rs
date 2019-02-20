@@ -4,6 +4,8 @@ extern crate xcb;
 use structopt::StructOpt;
 use xcb::shape;
 
+type Geom = (i16, i16, u16, u16);
+
 fn set_shape(conn: &xcb::Connection, window: xcb::Window, rects: &[xcb::Rectangle]) {
     shape::rectangles(
         &conn,
@@ -61,36 +63,40 @@ fn contained(x: i16, y: i16, width: i16, height: i16, p_x: i16, p_y: i16) -> boo
     x < p_x && y < p_y && p_x - x <= width && p_y - y <= height
 }
 
-fn get_window_at_point(conn: &xcb::Connection, win: xcb::Window, x: u32, y: u32) {
+fn viewable(conn: &xcb::Connection, win: xcb::Window) -> bool {
+    let attrs = xcb::get_window_attributes(conn, win).get_reply().unwrap();
+    (attrs.map_state() & xcb::MAP_STATE_VIEWABLE as u8) != 0
+}
+
+fn get_window_at_point(conn: &xcb::Connection, win: xcb::Window, x: u32, y: u32) -> Geom {
     let tree = xcb::query_tree(conn, win).get_reply().unwrap();
-    dbg!(win);
-    dbg!(tree.children_len());
-    for &child in tree.children() {
-        let attrs = xcb::get_window_attributes(conn, child).get_reply().unwrap();
-        let viewable = (attrs.map_state() & xcb::MAP_STATE_VIEWABLE as u8) != 0;
-        if !viewable {
-            continue;
-        }
-        let geom = xcb::get_geometry(conn, child).get_reply().unwrap();
-        let (gx, gy, gw, gh, border): (i16, i16, u16, u16, u16) =
-            (geom.x(), geom.y(), geom.width(), geom.height(), geom.border_width());
-        if !contained(
-            geom.x(),
-            geom.y(),
-            geom.width() as i16,
-            geom.height() as i16,
-            x as i16,
-            y as i16,
-        ) {
-            continue;
-        };
-        dbg!(gw);
-        dbg!(gh);
-        dbg!(gx);
-        dbg!(gy);
-        dbg!(child);
-        println!("{}x{}+{}+{}", gw + 2 * border, gh + 2 * border, gx, gy);
-    }
+    tree.children()
+        .iter()
+        .filter(|&child| viewable(conn, *child))
+        .filter_map(|&child| {
+            let geom = xcb::get_geometry(conn, child).get_reply().unwrap();
+            let (gx, gy, gw, gh, border): (i16, i16, u16, u16, u16) = (
+                geom.x(),
+                geom.y(),
+                geom.width(),
+                geom.height(),
+                geom.border_width(),
+            );
+            if contained(
+                gx,
+                gy,
+                gw as i16,
+                gh as i16,
+                x as i16,
+                y as i16,
+            ) {
+                Some((gx, gy, gw + 2 * border, gh + 2 * border))
+            } else {
+                None
+            }
+        })
+        .nth(1)
+        .expect("Could not retrieve window geometry under cursor")
 }
 
 #[derive(StructOpt, Debug)]
@@ -175,6 +181,7 @@ fn main() {
 
     let window = conn.generate_id();
 
+    // TODO fix pointer-grab? bug where hacksaw hangs if mouse held down before run
     grab_pointer_set_cursor(&conn, screen.root());
 
     let scr_height = screen.height_in_pixels();
@@ -229,6 +236,7 @@ fn main() {
     let mut ignore_next_release = false;
 
     // TODO start drawing guides even before first event, without excess duplication
+    // TODO draw rectangle around window under cursor
     loop {
         let ev = conn.wait_for_event().unwrap();
         match ev.response_type() {
@@ -320,10 +328,17 @@ fn main() {
             _ => continue,
         };
     }
+
     if width == 0 && height == 0 {
         // Grab window under cursor
-        get_window_at_point(&conn, screen.root(), start_x as u32, start_y as u32);
+        let (x, y, w, h) =
+            get_window_at_point(&conn, screen.root(), start_x as u32, start_y as u32);
+        width = w;
+        height = h;
+        left_x = x;
+        top_y = y;
     }
+
     // Now we have taken coordinates, we print them out
     println!("{}x{}+{}+{}", width, height, left_x, top_y);
 }
