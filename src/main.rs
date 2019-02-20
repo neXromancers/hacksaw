@@ -68,7 +68,7 @@ fn viewable(conn: &xcb::Connection, win: xcb::Window) -> bool {
     (attrs.map_state() & xcb::MAP_STATE_VIEWABLE as u8) != 0
 }
 
-fn get_window_at_point(conn: &xcb::Connection, win: xcb::Window, x: u32, y: u32) -> Geom {
+fn get_window_at_point(conn: &xcb::Connection, win: xcb::Window, x: i16, y: i16) -> Geom {
     let tree = xcb::query_tree(conn, win).get_reply().unwrap();
     tree.children()
         .iter()
@@ -87,8 +87,8 @@ fn get_window_at_point(conn: &xcb::Connection, win: xcb::Window, x: u32, y: u32)
                 gy,
                 gw as i16,
                 gh as i16,
-                x as i16,
-                y as i16,
+                x,
+                y,
             ) {
                 Some((gx, gy, gw + 2 * border, gh + 2 * border))
             } else {
@@ -332,7 +332,7 @@ fn main() {
     if width == 0 && height == 0 {
         // Grab window under cursor
         let (x, y, w, h) =
-            get_window_at_point(&conn, screen.root(), start_x as u32, start_y as u32);
+            get_window_at_point(&conn, screen.root(), start_x, start_y);
         width = w;
         height = h;
         left_x = x;
