@@ -63,8 +63,8 @@ fn contained(x: i16, y: i16, width: i16, height: i16, p_x: i16, p_y: i16) -> boo
 
 fn get_window_at_point(conn: &xcb::Connection, win: xcb::Window, x: u32, y: u32) {
     let tree = xcb::query_tree(conn, win).get_reply().unwrap();
-    println!("win id {}", win);
-    println!("num children: {}", tree.children_len());
+    dbg!(win);
+    dbg!(tree.children_len());
     for &child in tree.children() {
         let attrs = xcb::get_window_attributes(conn, child).get_reply().unwrap();
         let viewable = (attrs.map_state() & xcb::MAP_STATE_VIEWABLE as u8) != 0;
@@ -72,8 +72,8 @@ fn get_window_at_point(conn: &xcb::Connection, win: xcb::Window, x: u32, y: u32)
             continue;
         }
         let geom = xcb::get_geometry(conn, child).get_reply().unwrap();
-        let (gx, gy, gw, gh): (i16, i16, u16, u16) =
-            (geom.x(), geom.y(), geom.width(), geom.height());
+        let (gx, gy, gw, gh, border): (i16, i16, u16, u16, u16) =
+            (geom.x(), geom.y(), geom.width(), geom.height(), geom.border_width());
         if !contained(
             geom.x(),
             geom.y(),
@@ -84,7 +84,12 @@ fn get_window_at_point(conn: &xcb::Connection, win: xcb::Window, x: u32, y: u32)
         ) {
             continue;
         };
-        println!("child geom: {}x{}+{}+{}, id {}", gw, gh, gx, gy, child);
+        dbg!(gw);
+        dbg!(gh);
+        dbg!(gx);
+        dbg!(gy);
+        dbg!(child);
+        println!("{}x{}+{}+{}", gw + 2 * border, gh + 2 * border, gx, gy);
     }
 }
 
@@ -260,8 +265,10 @@ fn main() {
                 right_x = x.max(start_x);
                 bot_y = y.max(start_y);
 
-                width = (x - start_x).abs() as u16;
-                height = (y - start_y).abs() as u16;
+                if in_selection {
+                    width = (x - start_x).abs() as u16;
+                    height = (y - start_y).abs() as u16;
+                }
 
                 let mut rects = match (opt.no_guides, in_selection) {
                     (_, true) => vec![
@@ -316,7 +323,6 @@ fn main() {
     if width == 0 && height == 0 {
         // Grab window under cursor
         get_window_at_point(&conn, screen.root(), start_x as u32, start_y as u32);
-        get_window_at_point(&conn, 2097153, start_x as u32, start_y as u32);
     }
     // Now we have taken coordinates, we print them out
     println!("{}x{}+{}+{}", width, height, left_x, top_y);
