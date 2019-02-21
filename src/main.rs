@@ -70,7 +70,8 @@ fn viewable(conn: &xcb::Connection, win: xcb::Window) -> bool {
 
 fn get_window_at_point(conn: &xcb::Connection, win: xcb::Window, x: i16, y: i16) -> Geom {
     let tree = xcb::query_tree(conn, win).get_reply().unwrap();
-    let geoms = tree.children()
+    let geoms = tree
+        .children()
         .iter()
         .filter(|&child| viewable(conn, *child))
         .filter_map(|&child| {
@@ -82,20 +83,13 @@ fn get_window_at_point(conn: &xcb::Connection, win: xcb::Window, x: i16, y: i16)
                 geom.height(),
                 geom.border_width(),
             );
-            if contained(
-                gx,
-                gy,
-                gw as i16,
-                gh as i16,
-                x,
-                y,
-            ) {
+            if contained(gx, gy, gw as i16, gh as i16, x, y) {
                 Some((gx, gy, gw + 2 * border, gh + 2 * border))
             } else {
                 None
             }
         })
-    .collect::<Vec<_>>();
+        .collect::<Vec<_>>();
     geoms[geoms.len() - 2]
 }
 
