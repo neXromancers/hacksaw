@@ -187,7 +187,10 @@ fn main() {
         (xcb::CW_BACK_PIXEL, line_colour),
         (
             xcb::CW_EVENT_MASK,
-            xcb::EVENT_MASK_EXPOSURE | xcb::EVENT_MASK_KEY_PRESS, // we'll need this later
+            xcb::EVENT_MASK_EXPOSURE
+            | xcb::EVENT_MASK_KEY_PRESS // we'll need this later
+            | xcb::EVENT_MASK_STRUCTURE_NOTIFY
+            | xcb::EVENT_MASK_SUBSTRUCTURE_NOTIFY,
         ),
         (xcb::CW_OVERRIDE_REDIRECT, 1u32), // Don't be window managed
     ];
@@ -323,10 +326,28 @@ fn main() {
         };
     }
 
+    xcb::ungrab_pointer(&conn, xcb::CURRENT_TIME);
+    xcb::unmap_window(&conn, window);
+    xcb::destroy_window(&conn, window);
+    conn.flush();
+
+    loop {
+        let ev = conn.wait_for_event().unwrap();
+        match ev.response_type() {
+            xcb::UNMAP_NOTIFY => {
+                break;
+            }
+            xcb::DESTROY_NOTIFY => {
+                break;
+            }
+            _ => (),
+        }
+    }
+    std::thread::sleep(std::time::Duration::from_millis(40));
+
     if width == 0 && height == 0 {
         // Grab window under cursor
-        let (x, y, w, h) =
-            get_window_at_point(&conn, screen.root(), start_x, start_y);
+        let (x, y, w, h) = get_window_at_point(&conn, screen.root(), start_x, start_y);
         width = w;
         height = h;
         left_x = x;
