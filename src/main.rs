@@ -70,8 +70,7 @@ fn viewable(conn: &xcb::Connection, win: xcb::Window) -> bool {
 
 fn get_window_at_point(conn: &xcb::Connection, win: xcb::Window, x: i16, y: i16) -> Geom {
     let tree = xcb::query_tree(conn, win).get_reply().unwrap();
-    tree
-        .children()
+    tree.children()
         .iter()
         .filter(|&child| viewable(conn, *child))
         .filter_map(|&child| {
