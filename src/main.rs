@@ -151,7 +151,7 @@ fn parse_hex(hex: &str) -> Result<u32, String> {
             color = u32::from_str_radix(&hex, 16).expect("Invalid hex");
 
             if hex.len() == 6 {
-                color = color | 0xFF_00_00_00;
+                color |= 0xFF_00_00_00;
             }
         }
 
