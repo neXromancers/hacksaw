@@ -4,13 +4,13 @@
 
 ![screencast](https://user-images.githubusercontent.com/15344581/49049792-67b5d580-f1d8-11e8-871c-74fc8cc72d96.gif)
 
-### Installation:
+### Installation
 
 `cargo install --git https://github.com/neXromancers/hacksaw`
 
 (crates.io coming soon)
 
-### Features:
+### Features
 - **Guide Lines** to check precise positions and line up before you start a selection
   - just like the popular [Guides](https://github.com/udf/slop-guides) shader for slop
 - doesn't instantly quit on first keypress
@@ -26,3 +26,9 @@
   - not that i've actually run any performance comparisons to slop
 - [one of Thor's favorites](https://xkcd.com/2097/)
 - built for the most *advanced* and *cutting edge* platform of today, ***X11***
+
+### Stability
+- Main functionality is all there and pretty solid
+- You may experience bugs when invoking hacksaw while a popup is open
+- Clicking on a window to select its geometry is not yet stable
+- Pressing escape to exit selection is not yet implemented
