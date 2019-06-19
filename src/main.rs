@@ -75,7 +75,8 @@ fn input_output(conn: &xcb::Connection, win: xcb::Window) -> bool {
 
 fn get_window_at_point(conn: &xcb::Connection, win: xcb::Window, x: i16, y: i16) -> Geom {
     let tree = xcb::query_tree(conn, win).get_reply().unwrap();
-    let children = tree.children()
+    let children = tree
+        .children()
         .iter()
         .filter(|&child| viewable(conn, *child))
         .filter(|&child| input_output(conn, *child))
@@ -136,7 +137,7 @@ struct Opt {
 
 #[derive(Debug)]
 struct ParseHexError {
-    reason: String
+    reason: String,
 }
 
 impl std::fmt::Display for ParseHexError {
@@ -147,7 +148,9 @@ impl std::fmt::Display for ParseHexError {
 
 impl From<std::num::ParseIntError> for ParseHexError {
     fn from(err: std::num::ParseIntError) -> ParseHexError {
-        ParseHexError{reason: format!("{}", err)}
+        ParseHexError {
+            reason: format!("{}", err),
+        }
     }
 }
 
@@ -177,7 +180,11 @@ fn parse_hex(hex: &str) -> Result<u32, ParseHexError> {
             }
         }
 
-        _ => return Err(ParseHexError{reason: "Bad hex colour".to_owned()}),
+        _ => {
+            return Err(ParseHexError {
+                reason: "Bad hex colour".to_owned(),
+            })
+        }
     }
 
     Ok(color)
