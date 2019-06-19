@@ -68,11 +68,17 @@ fn viewable(conn: &xcb::Connection, win: xcb::Window) -> bool {
     (attrs.map_state() & xcb::MAP_STATE_VIEWABLE as u8) != 0
 }
 
+fn input_output(conn: &xcb::Connection, win: xcb::Window) -> bool {
+    let attrs = xcb::get_window_attributes(conn, win).get_reply().unwrap();
+    (attrs.class() & xcb::WINDOW_CLASS_INPUT_OUTPUT as u16) == 0
+}
+
 fn get_window_at_point(conn: &xcb::Connection, win: xcb::Window, x: i16, y: i16) -> Geom {
     let tree = xcb::query_tree(conn, win).get_reply().unwrap();
     tree.children()
         .iter()
         .filter(|&child| viewable(conn, *child))
+        .filter(|&child| input_output(conn, *child))
         .filter_map(|&child| {
             let geom = xcb::get_geometry(conn, child).get_reply().unwrap();
             let (gx, gy, gw, gh, border): (i16, i16, u16, u16, u16) = (
