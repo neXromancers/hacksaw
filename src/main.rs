@@ -149,7 +149,7 @@ impl std::fmt::Display for ParseHexError {
 impl From<std::num::ParseIntError> for ParseHexError {
     fn from(err: std::num::ParseIntError) -> ParseHexError {
         ParseHexError {
-            reason: format!("{}", err),
+            reason: err.to_string()
         }
     }
 }
