@@ -1,10 +1,11 @@
 #[macro_use]
 extern crate structopt;
 extern crate xcb;
-use structopt::StructOpt;
-use xcb::shape;
+mod util;
 
-type Geom = (i16, i16, u16, u16);
+use structopt::StructOpt;
+use util::{fill_format_string, parse_format_string, Format, HacksawResult};
+use xcb::shape;
 
 fn set_shape(conn: &xcb::Connection, window: xcb::Window, rects: &[xcb::Rectangle]) {
     shape::rectangles(
@@ -73,7 +74,7 @@ fn input_output(conn: &xcb::Connection, win: xcb::Window) -> bool {
     (attrs.class() & xcb::WINDOW_CLASS_INPUT_OUTPUT as u16) != 0
 }
 
-fn get_window_at_point(conn: &xcb::Connection, win: xcb::Window, x: i16, y: i16) -> Geom {
+fn get_window_at_point(conn: &xcb::Connection, win: xcb::Window, x: i16, y: i16) -> HacksawResult {
     let tree = xcb::query_tree(conn, win).get_reply().unwrap();
     let children = tree
         .children()
@@ -90,7 +91,12 @@ fn get_window_at_point(conn: &xcb::Connection, win: xcb::Window, x: i16, y: i16)
                 geom.border_width(),
             );
             if contained(gx, gy, gw as i16, gh as i16, x, y) {
-                Some((gx, gy, gw + 2 * border, gh + 2 * border))
+                Some(HacksawResult {
+                    x: gx,
+                    y: gy,
+                    width: gw + 2 * border,
+                    height: gh + 2 * border,
+                })
             } else {
                 None
             }
@@ -133,6 +139,16 @@ struct Opt {
         help = "Hex colour of the lines (RGB or RGBA), '#' optional"
     )]
     line_colour: u32,
+
+    #[structopt(
+        short = "f",
+        long = "format",
+        default_value = "%wx%h+%x+%y",
+        parse(try_from_str = "parse_format_string"),
+        help = "Output format. You can use %x for x-coordinate, %y for y-coordinate, %w for width, \
+                %h for height, and %% for a literal '%'. Other %-codes will cause an error."
+    )]
+    format: Format,
 }
 
 #[derive(Debug)]
@@ -149,7 +165,7 @@ impl std::fmt::Display for ParseHexError {
 impl From<std::num::ParseIntError> for ParseHexError {
     fn from(err: std::num::ParseIntError) -> ParseHexError {
         ParseHexError {
-            reason: err.to_string()
+            reason: err.to_string(),
         }
     }
 }
@@ -196,15 +212,17 @@ fn main() {
     let line_width = opt.select_thickness;
     let guide_width = opt.guide_thickness;
     let line_colour = opt.line_colour;
+    let format = opt.format.0;
 
     let (conn, screen_num) = xcb::Connection::connect(None).unwrap();
     let setup = conn.get_setup();
     let screen = setup.roots().nth(screen_num as usize).unwrap();
+    let root = screen.root();
 
     let window = conn.generate_id();
 
     // TODO fix pointer-grab? bug where hacksaw hangs if mouse held down before run
-    grab_pointer_set_cursor(&conn, screen.root());
+    grab_pointer_set_cursor(&conn, root);
 
     let scr_height = screen.height_in_pixels();
     let scr_width = screen.width_in_pixels();
@@ -227,7 +245,7 @@ fn main() {
         &conn,
         xcb::COPY_FROM_PARENT as u8, // usually 32?
         window,
-        screen.root(),
+        root,
         0,          // x
         0,          // y
         scr_width,  // width
@@ -373,15 +391,19 @@ fn main() {
     }
     std::thread::sleep(std::time::Duration::from_millis(40));
 
+    let result;
     if width == 0 && height == 0 {
         // Grab window under cursor
-        let (x, y, w, h) = get_window_at_point(&conn, screen.root(), start_x, start_y);
-        width = w;
-        height = h;
-        left_x = x;
-        top_y = y;
+        result = get_window_at_point(&conn, root, start_x, start_y);
+    } else {
+        result = HacksawResult {
+            x: left_x,
+            y: top_y,
+            width,
+            height,
+        };
     }
 
     // Now we have taken coordinates, we print them out
-    println!("{}x{}+{}+{}", width, height, left_x, top_y);
+    println!("{}", fill_format_string(format, result));
 }
