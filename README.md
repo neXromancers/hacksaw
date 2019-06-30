@@ -30,5 +30,4 @@
 ### Stability
 - Main functionality is all there and pretty solid
 - You may experience bugs when invoking hacksaw while a popup is open
-- Clicking on a window to select its geometry is not yet stable
 - Pressing escape to exit selection is not yet implemented
