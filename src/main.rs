@@ -108,7 +108,7 @@ fn get_window_at_point(conn: &xcb::Connection, win: xcb::Window, x: i16, y: i16)
 }
 
 #[derive(StructOpt, Debug)]
-#[structopt(name = "hacksaw", raw(setting = "AllowLeadingHyphen"))]
+#[structopt(name = "hacksaw")]
 struct Opt {
     #[structopt(
         short = "n",
@@ -147,6 +147,7 @@ struct Opt {
         long = "format",
         default_value = "%g",
         parse(try_from_str = "parse_format_string"),
+        raw(allow_hyphen_values = "true"),
         help = "Output format. You can use %x for x-coordinate, %y for y-coordinate, %w for width, \
                 %h for height, %i for selected window id, %g as a shorthand for %wx%h+%x+%y (the \
                 default, X geometry) and %% for a literal '%'. Other %-codes will cause an error."
