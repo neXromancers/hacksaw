@@ -4,6 +4,7 @@ extern crate xcb;
 mod util;
 
 use structopt::StructOpt;
+use structopt::clap::AppSettings::AllowLeadingHyphen;
 use util::{fill_format_string, parse_format_string, Format, HacksawResult};
 use xcb::shape;
 
@@ -107,7 +108,7 @@ fn get_window_at_point(conn: &xcb::Connection, win: xcb::Window, x: i16, y: i16)
 }
 
 #[derive(StructOpt, Debug)]
-#[structopt(name = "hacksaw")]
+#[structopt(name = "hacksaw", raw(setting = "AllowLeadingHyphen"))]
 struct Opt {
     #[structopt(
         short = "n",
