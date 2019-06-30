@@ -148,7 +148,8 @@ struct Opt {
         default_value = "%g",
         parse(try_from_str = "parse_format_string"),
         help = "Output format. You can use %x for x-coordinate, %y for y-coordinate, %w for width, \
-                %h for height, and %% for a literal '%'. Other %-codes will cause an error."
+                %h for height, %i for selected window id, %g as a shorthand for %wx%h+%x+%y (the \
+                default, X geometry) and %% for a literal '%'. Other %-codes will cause an error."
     )]
     format: Format,
 }
