@@ -92,6 +92,7 @@ fn get_window_at_point(conn: &xcb::Connection, win: xcb::Window, x: i16, y: i16)
             );
             if contained(gx, gy, gw as i16, gh as i16, x, y) {
                 Some(HacksawResult {
+                    window: child,
                     x: gx,
                     y: gy,
                     width: gw + 2 * border,
@@ -397,6 +398,7 @@ fn main() {
         result = get_window_at_point(&conn, root, start_x, start_y);
     } else {
         result = HacksawResult {
+            window: root,
             x: left_x,
             y: top_y,
             width,

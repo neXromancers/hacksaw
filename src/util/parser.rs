@@ -10,6 +10,7 @@ use self::nom::{
 
 #[derive(Debug)]
 pub enum FormatToken {
+    WindowId,
     Width,
     Height,
     X,
@@ -21,6 +22,7 @@ fn parse_format(input: &str) -> IResult<&str, FormatToken> {
     preceded(
         tag("%"),
         alt((
+            map(tag("i"), |_| FormatToken::WindowId),
             map(tag("w"), |_| FormatToken::Width),
             map(tag("h"), |_| FormatToken::Height),
             map(tag("x"), |_| FormatToken::X),
