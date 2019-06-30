@@ -3,7 +3,6 @@ pub use self::parser::FormatToken;
 
 extern crate nom;
 
-// TODO window id
 #[derive(Clone, Copy)]
 pub struct HacksawResult {
     pub window: u32,
