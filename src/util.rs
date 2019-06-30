@@ -18,6 +18,10 @@ pub fn fill_format_string(format: Vec<FormatToken>, result: HacksawResult) -> St
         .into_iter()
         .map(|token| match token {
             FormatToken::WindowId => result.window.to_string(),
+            FormatToken::Geometry => format!(
+                "{}x{}+{}+{}",
+                result.width, result.height, result.x, result.y
+            ),
             FormatToken::Width => result.width.to_string(),
             FormatToken::Height => result.height.to_string(),
             FormatToken::X => result.x.to_string(),

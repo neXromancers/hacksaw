@@ -145,7 +145,7 @@ struct Opt {
     #[structopt(
         short = "f",
         long = "format",
-        default_value = "%wx%h+%x+%y",
+        default_value = "%g",
         parse(try_from_str = "parse_format_string"),
         help = "Output format. You can use %x for x-coordinate, %y for y-coordinate, %w for width, \
                 %h for height, and %% for a literal '%'. Other %-codes will cause an error."
