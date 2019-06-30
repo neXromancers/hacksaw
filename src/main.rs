@@ -4,7 +4,6 @@ extern crate xcb;
 mod util;
 
 use structopt::StructOpt;
-use structopt::clap::AppSettings::AllowLeadingHyphen;
 use util::{fill_format_string, parse_format_string, Format, HacksawResult};
 use xcb::shape;
 
