@@ -1,4 +1,4 @@
-pub mod parser;
+mod parser;
 pub use self::parser::FormatToken;
 
 extern crate nom;
