@@ -31,3 +31,27 @@
 - Main functionality is all there and pretty solid
 - You may experience bugs when invoking hacksaw while a popup is open
 - Pressing escape to exit selection is not yet implemented
+
+### Usage
+
+```
+hacksaw 0.1.0
+expectocode <expectocode@gmail.com>
+
+USAGE:
+    hacksaw [FLAGS] [OPTIONS]
+
+FLAGS:
+    -h, --help         Prints help information
+    -n, --no-guides    Disable fighter pilot guide lines
+    -V, --version      Prints version information
+
+OPTIONS:
+    -f, --format <format>
+            Output format. You can use %x for x-coordinate, %y for y-coordinate, %w for width, %h for height, %i for
+            selected window id, %g as a shorthand for %wx%h+%x+%y (the default, X geometry) and %% for a literal '%'.
+            Other %-codes will cause an error. [default: %g]
+    -g, --guide-thickness <guide_thickness>      Thickness of fighter pilot guide lines [default: 1]
+    -c, --colour <line_colour>                   Hex colour of the lines (RGB or RGBA), '#' optional [default: #7f7f7f]
+    -s, --select-thickness <select_thickness>    Thickness of selection box lines [default: 1]
+```
