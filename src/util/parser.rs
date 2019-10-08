@@ -34,14 +34,18 @@ fn parse_format(input: &str) -> IResult<&str, FormatToken> {
     )(input)
 }
 
-fn parse_reg(input: &str) -> IResult<&str, FormatToken> {
+fn parse_literal(input: &str) -> IResult<&str, FormatToken> {
+    // Parse a literal by taking the entire string until a % sign and wrapping
+    // it in a FormatToken::Literal.
     map(is_not("%"), |s: &str| FormatToken::Literal(s.to_owned()))(input)
 }
 
 fn parse_anything(input: &str) -> IResult<&str, FormatToken> {
-    alt((parse_format, parse_reg))(input)
+    // Parse a single token - either a %-token or a literal.
+    alt((parse_format, parse_literal))(input)
 }
 
 pub fn parse_all(input: &str) -> IResult<&str, Vec<FormatToken>> {
+    // Parse as many individual tokens as we can, using the entire string.
     complete(many0(parse_anything))(input)
 }
