@@ -1,4 +1,3 @@
-#[macro_use]
 extern crate structopt;
 extern crate xcb;
 mod util;
@@ -339,7 +338,7 @@ fn main() {
                     height = (y - start_y).abs() as u16;
                 }
 
-                let mut rects = match (opt.no_guides, in_selection) {
+                let rects = match (opt.no_guides, in_selection) {
                     (_, true) => vec![
                         // Selection rectangle
                         xcb::Rectangle::new(
