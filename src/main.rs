@@ -291,7 +291,7 @@ fn main() {
 
                 let detail = button_press.detail();
                 if detail == 3 {
-                    println!("Exiting due to right click");
+                    eprintln!("Exiting due to right click");
                     return;
                 } else {
                     set_shape(&conn, window, &[]);
@@ -305,7 +305,7 @@ fn main() {
             xcb::KEY_PRESS => {
                 // TODO fix this by grabbing keyboard
                 // TODO only quit on Esc and similar
-                println!("Exiting due to key press");
+                eprintln!("Exiting due to key press");
                 return;
             }
             xcb::MOTION_NOTIFY => {
