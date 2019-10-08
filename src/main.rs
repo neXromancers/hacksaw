@@ -85,7 +85,29 @@ fn input_output(conn: &xcb::Connection, win: xcb::Window) -> bool {
     (attrs.class() & xcb::WINDOW_CLASS_INPUT_OUTPUT as u16) != 0
 }
 
-fn get_window_at_point(conn: &xcb::Connection, win: xcb::Window, x: i16, y: i16) -> HacksawResult {
+fn get_window_geom(conn: &xcb::Connection, win: xcb::Window) -> HacksawResult {
+    let geom = xcb::get_geometry(conn, win).get_reply().unwrap();
+    let (gx, gy, gw, gh, border): (i16, i16, u16, u16, u16) = (
+        geom.x(),
+        geom.y(),
+        geom.width(),
+        geom.height(),
+        geom.border_width(),
+    );
+
+    HacksawResult {
+        window: win,
+        x: gx,
+        y: gy,
+        width: gw + 2 * border,
+        height: gh + 2 * border,
+    }
+}
+
+fn get_window_at_point(
+    conn: &xcb::Connection, win: xcb::Window,
+    x: i16, y: i16,
+    remove_decorations: u32) -> HacksawResult {
     let tree = xcb::query_tree(conn, win).get_reply().unwrap();
     let children = tree
         .children()
@@ -93,28 +115,25 @@ fn get_window_at_point(conn: &xcb::Connection, win: xcb::Window, x: i16, y: i16)
         .filter(|&child| viewable(conn, *child))
         .filter(|&child| input_output(conn, *child))
         .filter_map(|&child| {
-            let geom = xcb::get_geometry(conn, child).get_reply().unwrap();
-            let (gx, gy, gw, gh, border): (i16, i16, u16, u16, u16) = (
-                geom.x(),
-                geom.y(),
-                geom.width(),
-                geom.height(),
-                geom.border_width(),
-            );
-            if contained(gx, gy, gw as i16, gh as i16, x, y) {
-                Some(HacksawResult {
-                    window: child,
-                    x: gx,
-                    y: gy,
-                    width: gw + 2 * border,
-                    height: gh + 2 * border,
-                })
+            let geom = get_window_geom(conn, child);
+            if contained(geom.x, geom.y, geom.width as i16, geom.height as i16, x, y) {
+                Some(geom)
             } else {
                 None
             }
         })
         .collect::<Vec<_>>();
-    children[children.len() - 1]
+
+    let mut window = children[children.len() - 1];
+    for _ in (0..remove_decorations).rev() {
+        let tree = xcb::query_tree(conn, window.window).get_reply().unwrap();
+        if tree.children_len() == 0 {
+            break;
+        }
+        let firstborn = tree.children()[0];
+        window = get_window_geom(conn, firstborn).relative_to(window);
+    }
+    window
 }
 
 #[derive(StructOpt, Debug)]
@@ -163,6 +182,14 @@ struct Opt {
                 default, X geometry) and %% for a literal '%'. Other %-codes will cause an error."
     )]
     format: Format,
+
+    #[structopt(
+        short = "r",
+        long = "remove-decorations",
+        default_value = "0",
+        help = "Number of (nested) window manager frames to try and remove"
+    )]
+    remove_decorations: u32,
 }
 
 #[derive(Debug)]
@@ -411,7 +438,7 @@ fn run() -> i32 {
     let result;
     if width == 0 && height == 0 {
         // Grab window under cursor
-        result = get_window_at_point(&conn, root, start_x, start_y);
+        result = get_window_at_point(&conn, root, start_x, start_y, opt.remove_decorations);
     } else {
         result = HacksawResult {
             window: root,

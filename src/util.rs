@@ -12,6 +12,18 @@ pub struct HacksawResult {
     pub height: u16,
 }
 
+impl HacksawResult {
+    pub fn relative_to(&self, parent: HacksawResult) -> HacksawResult {
+        HacksawResult {
+            window: self.window,
+            x: parent.x + self.x,
+            y: parent.y + self.y,
+            width: self.width,
+            height: self.height,
+        }
+    }
+}
+
 pub fn fill_format_string(format: Vec<FormatToken>, result: HacksawResult) -> String {
     format
         .into_iter()
