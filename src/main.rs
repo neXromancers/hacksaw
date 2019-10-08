@@ -7,6 +7,8 @@ use structopt::StructOpt;
 use util::{fill_format_string, parse_format_string, Format, HacksawResult};
 use xcb::shape;
 
+const CURSOR_GRAB_TRIES: i32 = 5;
+
 fn set_shape(conn: &xcb::Connection, window: xcb::Window, rects: &[xcb::Rectangle]) {
     shape::rectangles(
         &conn,
@@ -32,7 +34,7 @@ fn set_title(conn: &xcb::Connection, window: xcb::Window, title: &str) {
     );
 }
 
-fn grab_pointer_set_cursor(conn: &xcb::Connection, root: u32) {
+fn grab_pointer_set_cursor(conn: &xcb::Connection, root: u32) -> bool {
     let font = conn.generate_id();
     xcb::open_font(&conn, font, "cursor");
 
@@ -41,22 +43,32 @@ fn grab_pointer_set_cursor(conn: &xcb::Connection, root: u32) {
     let cursor = conn.generate_id();
     xcb::create_glyph_cursor(&conn, cursor, font, font, 0, 30, 0, 0, 0, 0, 0, 0);
 
-    xcb::grab_pointer(
-        &conn,
-        true,
-        root,
-        (xcb::EVENT_MASK_BUTTON_RELEASE
-            | xcb::EVENT_MASK_BUTTON_PRESS
-            | xcb::EVENT_MASK_BUTTON_MOTION
-            | xcb::EVENT_MASK_POINTER_MOTION) as u16,
-        xcb::GRAB_MODE_ASYNC as u8,
-        xcb::GRAB_MODE_ASYNC as u8,
-        xcb::NONE,
-        cursor,
-        xcb::CURRENT_TIME,
-    )
-    .get_reply()
-    .unwrap();
+    for i in 0..CURSOR_GRAB_TRIES {
+        let reply = xcb::grab_pointer(
+            &conn,
+            true,
+            root,
+            (xcb::EVENT_MASK_BUTTON_RELEASE
+                | xcb::EVENT_MASK_BUTTON_PRESS
+                | xcb::EVENT_MASK_BUTTON_MOTION
+                | xcb::EVENT_MASK_POINTER_MOTION) as u16,
+            xcb::GRAB_MODE_ASYNC as u8,
+            xcb::GRAB_MODE_ASYNC as u8,
+            xcb::NONE,
+            cursor,
+            xcb::CURRENT_TIME,
+        )
+        .get_reply()
+        .unwrap();
+
+        if reply.status() as u32 == xcb::GRAB_STATUS_SUCCESS {
+            return true;
+        } else if i < CURSOR_GRAB_TRIES - 1 {
+            std::thread::sleep(std::time::Duration::from_millis(100));
+        }
+    }
+
+    false
 }
 
 fn contained(x: i16, y: i16, width: i16, height: i16, p_x: i16, p_y: i16) -> bool {
@@ -225,7 +237,10 @@ fn main() {
     let window = conn.generate_id();
 
     // TODO fix pointer-grab? bug where hacksaw hangs if mouse held down before run
-    grab_pointer_set_cursor(&conn, root);
+    if !grab_pointer_set_cursor(&conn, root) {
+        eprintln!("Failed to grab cursor after {} tries, giving up", CURSOR_GRAB_TRIES);
+        return;
+    }
 
     let scr_height = screen.height_in_pixels();
     let scr_width = screen.width_in_pixels();
