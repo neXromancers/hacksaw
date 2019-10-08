@@ -220,7 +220,7 @@ fn parse_hex(hex: &str) -> Result<u32, ParseHexError> {
     Ok(color)
 }
 
-fn main() {
+fn run() -> i32 {
     let opt = Opt::from_args();
 
     let line_width = opt.select_thickness;
@@ -238,7 +238,7 @@ fn main() {
     // TODO fix pointer-grab? bug where hacksaw hangs if mouse held down before run
     if !grab_pointer_set_cursor(&conn, root) {
         eprintln!("Failed to grab cursor after {} tries, giving up", CURSOR_GRAB_TRIES);
-        return;
+        return 1;
     }
 
     let scr_height = screen.height_in_pixels();
@@ -306,7 +306,7 @@ fn main() {
                 let detail = button_press.detail();
                 if detail == 3 {
                     eprintln!("Exiting due to right click");
-                    return;
+                    return 1;
                 } else {
                     set_shape(&conn, window, &[]);
                     conn.flush();
@@ -320,7 +320,7 @@ fn main() {
                 // TODO fix this by grabbing keyboard
                 // TODO only quit on Esc and similar
                 eprintln!("Exiting due to key press");
-                return;
+                return 1;
             }
             xcb::MOTION_NOTIFY => {
                 let motion: &xcb::MotionNotifyEvent = unsafe { xcb::cast_event(&ev) };
@@ -424,4 +424,10 @@ fn main() {
 
     // Now we have taken coordinates, we print them out
     println!("{}", fill_format_string(format, result));
+
+    0
+}
+
+fn main() {
+    std::process::exit(run());
 }
