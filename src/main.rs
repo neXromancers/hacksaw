@@ -125,7 +125,7 @@ fn get_window_at_point(
         .collect::<Vec<_>>();
 
     let mut window = children[children.len() - 1];
-    for _ in (0..remove_decorations).rev() {
+    for _ in 0..remove_decorations {
         let tree = xcb::query_tree(conn, window.window).get_reply().unwrap();
         if tree.children_len() == 0 {
             break;
