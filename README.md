@@ -51,7 +51,12 @@ OPTIONS:
             Output format. You can use %x for x-coordinate, %y for y-coordinate, %w for width, %h for height, %i for
             selected window id, %g as a shorthand for %wx%h+%x+%y (the default, X geometry) and %% for a literal '%'.
             Other %-codes will cause an error. [default: %g]
-    -g, --guide-thickness <guide_thickness>      Thickness of fighter pilot guide lines [default: 1]
-    -c, --colour <line_colour>                   Hex colour of the lines (RGB or RGBA), '#' optional [default: #7f7f7f]
-    -s, --select-thickness <select_thickness>    Thickness of selection box lines [default: 1]
+    -g, --guide-thickness <guide_thickness>          Thickness of fighter pilot guide lines [default: 1]
+    -c, --colour <line_colour>
+            Hex colour of the lines (RGB or RGBA), '#' optional [default: #7f7f7f]
+
+    -r, --remove-decorations <remove_decorations>
+            Number of (nested) window manager frames to try and remove [default: 0]
+
+    -s, --select-thickness <select_thickness>        Thickness of selection box lines [default: 1]
 ```
