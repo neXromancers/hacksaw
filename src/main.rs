@@ -103,7 +103,7 @@ fn get_window_at_point(
     x: i16,
     y: i16,
     remove_decorations: u32,
-) -> HacksawResult {
+) -> Option<HacksawResult> {
     let tree = xcb::query_tree(conn, win).get_reply().unwrap();
     let children = tree
         .children()
@@ -120,6 +120,10 @@ fn get_window_at_point(
         })
         .collect::<Vec<_>>();
 
+    if children.len() == 0 {
+        return None;
+    }
+
     let mut window = children[children.len() - 1];
     for _ in 0..remove_decorations {
         let tree = xcb::query_tree(conn, window.window).get_reply().unwrap();
@@ -129,7 +133,8 @@ fn get_window_at_point(
         let firstborn = tree.children()[0];
         window = get_window_geom(conn, firstborn).relative_to(window);
     }
-    window
+
+    Some(window)
 }
 
 #[derive(StructOpt, Debug)]
@@ -437,7 +442,10 @@ fn run() -> i32 {
     let result;
     if width == 0 && height == 0 {
         // Grab window under cursor
-        result = get_window_at_point(&conn, root, start_x, start_y, opt.remove_decorations);
+        result = match get_window_at_point(&conn, root, start_x, start_y, opt.remove_decorations) {
+            Some(r) => r,
+            None => get_window_geom(&conn, screen.root()),
+        }
     } else {
         result = HacksawResult {
             window: root,
