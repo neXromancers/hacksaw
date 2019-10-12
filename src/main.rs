@@ -98,9 +98,12 @@ fn get_window_geom(conn: &xcb::Connection, win: xcb::Window) -> HacksawResult {
 }
 
 fn get_window_at_point(
-    conn: &xcb::Connection, win: xcb::Window,
-    x: i16, y: i16,
-    remove_decorations: u32) -> HacksawResult {
+    conn: &xcb::Connection,
+    win: xcb::Window,
+    x: i16,
+    y: i16,
+    remove_decorations: u32,
+) -> HacksawResult {
     let tree = xcb::query_tree(conn, win).get_reply().unwrap();
     let children = tree
         .children()
@@ -257,7 +260,10 @@ fn run() -> i32 {
 
     // TODO fix pointer-grab? bug where hacksaw hangs if mouse held down before run
     if !grab_pointer_set_cursor(&conn, root) {
-        eprintln!("Failed to grab cursor after {} tries, giving up", CURSOR_GRAB_TRIES);
+        eprintln!(
+            "Failed to grab cursor after {} tries, giving up",
+            CURSOR_GRAB_TRIES
+        );
         return 1;
     }
 
