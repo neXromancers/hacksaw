@@ -6,7 +6,22 @@
 
 ### Installation
 
-`cargo install --git https://github.com/neXromancers/hacksaw`
+Before installing, make sure you have the following libraries installed (this list is non-exhaustive):
+
+* `xcb-shape`
+* `xcb-xkb`
+
+On systems with `apt`, you should be able to run:
+
+```sh
+apt install libxcb-shape0-dev libxcb-xkb-dev
+```
+
+Once all the dependencies are installed, you can install with `cargo`:
+
+```sh
+cargo install --git https://github.com/neXromancers/hacksaw
+```
 
 (crates.io coming soon)
 
