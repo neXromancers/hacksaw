@@ -87,20 +87,13 @@ fn input_output(conn: &xcb::Connection, win: xcb::Window) -> bool {
 
 fn get_window_geom(conn: &xcb::Connection, win: xcb::Window) -> HacksawResult {
     let geom = xcb::get_geometry(conn, win).get_reply().unwrap();
-    let (gx, gy, gw, gh, border): (i16, i16, u16, u16, u16) = (
-        geom.x(),
-        geom.y(),
-        geom.width(),
-        geom.height(),
-        geom.border_width(),
-    );
 
     HacksawResult {
         window: win,
-        x: gx,
-        y: gy,
-        width: gw + 2 * border,
-        height: gh + 2 * border,
+        x: geom.x(),
+        y: geom.y(),
+        width: geom.width() + 2 * geom.border_width(),
+        height: geom.height() + 2 * geom.border_width(),
     }
 }
 
