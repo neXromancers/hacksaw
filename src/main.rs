@@ -100,8 +100,7 @@ fn get_window_geom(conn: &xcb::Connection, win: xcb::Window) -> HacksawResult {
 fn get_window_at_point(
     conn: &xcb::Connection,
     win: xcb::Window,
-    x: i16,
-    y: i16,
+    pt: xcb::Point,
     remove_decorations: u32,
 ) -> Option<HacksawResult> {
     let tree = xcb::query_tree(conn, win).get_reply().unwrap();
@@ -112,7 +111,7 @@ fn get_window_at_point(
         .filter(|&child| input_output(conn, *child))
         .filter_map(|&child| {
             let geom = get_window_geom(conn, child);
-            if contained(geom.x, geom.y, geom.width as i16, geom.height as i16, x, y) {
+            if contained(geom.x, geom.y, geom.width as i16, geom.height as i16, pt.x(), pt.y()) {
                 Some(geom)
             } else {
                 None
@@ -248,6 +247,14 @@ fn parse_hex(hex: &str) -> Result<u32, ParseHexError> {
     Ok(color)
 }
 
+fn min_max(a: i16, b: i16) -> (i16, i16) {
+    if a < b {
+        (a, b)
+    } else {
+        (b, a)
+    }
+}
+
 fn run() -> i32 {
     let opt = Opt::from_args();
 
@@ -312,16 +319,8 @@ fn run() -> i32 {
 
     conn.flush();
 
-    let mut start_x = 0;
-    let mut start_y = 0;
-
-    let mut top_y = 0;
-    let mut left_x = 0;
-    let mut right_x;
-    let mut bot_y;
-
-    let mut width = 0;
-    let mut height = 0;
+    let mut start_pt = xcb::Point::new(0, 0);
+    let mut selection = xcb::Rectangle::new(0, 0, 0, 0);
 
     let mut in_selection = false;
     let mut ignore_next_release = false;
@@ -341,8 +340,10 @@ fn run() -> i32 {
                 } else {
                     set_shape(&conn, window, &[]);
                     conn.flush();
-                    start_x = button_press.event_x();
-                    start_y = button_press.event_y();
+                    start_pt = xcb::Point::new(
+                        button_press.event_x(),
+                        button_press.event_y());
+
                     in_selection = !(detail == 4 || detail == 5);
                     ignore_next_release = detail == 4 || detail == 5;
                 }
@@ -355,47 +356,45 @@ fn run() -> i32 {
             }
             xcb::MOTION_NOTIFY => {
                 let motion: &xcb::MotionNotifyEvent = unsafe { xcb::cast_event(&ev) };
-                let x = motion.event_x();
-                let y = motion.event_y();
 
-                // TODO investigate efficiency of let mut outside loop vs let inside
-                left_x = x.min(start_x);
-                top_y = y.min(start_y);
-                right_x = x.max(start_x);
-                bot_y = y.max(start_y);
-
-                if in_selection {
-                    width = (x - start_x).abs() as u16;
-                    height = (y - start_y).abs() as u16;
-                }
+                let (left, right) = min_max(motion.event_x(), start_pt.x());
+                let (top, bottom) = min_max(motion.event_y(), start_pt.y());
+                let width = (right - left) as u16;
+                let height = (bottom - top) as u16;
+                selection = xcb::Rectangle::new(left, top, width, height);
 
                 let rects = match (opt.no_guides, in_selection) {
                     (_, true) => vec![
                         // Selection rectangle
                         xcb::Rectangle::new(
-                            left_x - line_width as i16,
-                            top_y,
+                            left - line_width as i16,
+                            top,
                             line_width,
                             height + line_width,
                         ),
                         xcb::Rectangle::new(
-                            left_x - line_width as i16,
-                            top_y - line_width as i16,
+                            left - line_width as i16,
+                            top - line_width as i16,
                             width + line_width,
                             line_width,
                         ),
                         xcb::Rectangle::new(
-                            right_x as i16,
-                            top_y - line_width as i16,
+                            right,
+                            top - line_width as i16,
                             line_width,
                             height + line_width,
                         ),
-                        xcb::Rectangle::new(left_x, bot_y, width + line_width, line_width),
+                        xcb::Rectangle::new(left, bottom, width + line_width, line_width),
                     ],
                     (false, false) => vec![
                         // Guides
-                        xcb::Rectangle::new(x - guide_width as i16 / 2, 0, guide_width, scr_height),
-                        xcb::Rectangle::new(0, y - guide_width as i16 / 2, scr_width, guide_width),
+                        xcb::Rectangle::new(
+                            motion.event_x() - guide_width as i16 / 2, 0,
+                            guide_width, scr_height),
+
+                        xcb::Rectangle::new(
+                            0, motion.event_y() - guide_width as i16 / 2,
+                            scr_width, guide_width),
                     ],
                     (true, false) => vec![],
                 };
@@ -440,19 +439,19 @@ fn run() -> i32 {
     std::thread::sleep(std::time::Duration::from_millis(40));
 
     let result;
-    if width == 0 && height == 0 {
+    if selection.width() == 0 && selection.height() == 0 {
         // Grab window under cursor
-        result = match get_window_at_point(&conn, root, start_x, start_y, opt.remove_decorations) {
+        result = match get_window_at_point(&conn, root, start_pt, opt.remove_decorations) {
             Some(r) => r,
             None => get_window_geom(&conn, screen.root()),
         }
     } else {
         result = HacksawResult {
             window: root,
-            x: left_x,
-            y: top_y,
-            width,
-            height,
+            x: selection.x(),
+            y: selection.y(),
+            width: selection.width(),
+            height: selection.height(),
         };
     }
 
