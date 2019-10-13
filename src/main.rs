@@ -255,6 +255,13 @@ fn min_max(a: i16, b: i16) -> (i16, i16) {
     }
 }
 
+fn build_guides(screen: xcb::Rectangle, pt: xcb::Point, width: u16) -> Vec<xcb::Rectangle> {
+    vec![
+        xcb::Rectangle::new(pt.x() - width as i16 / 2, screen.x(), width, screen.height()),
+        xcb::Rectangle::new(screen.y(), pt.y() - width as i16  / 2, screen.width(), width),
+    ]
+}
+
 fn run() -> i32 {
     let opt = Opt::from_args();
 
@@ -279,8 +286,7 @@ fn run() -> i32 {
         return 1;
     }
 
-    let scr_height = screen.height_in_pixels();
-    let scr_width = screen.width_in_pixels();
+    let screen_rect = xcb::Rectangle::new(0, 0, screen.width_in_pixels(), screen.height_in_pixels());
 
     // TODO event handling for expose/keypress
     let values = [
@@ -301,10 +307,10 @@ fn run() -> i32 {
         xcb::COPY_FROM_PARENT as u8, // usually 32?
         window,
         root,
-        0,          // x
-        0,          // y
-        scr_width,  // width
-        scr_height, // height
+        screen_rect.x(),
+        screen_rect.y(),
+        screen_rect.width(),
+        screen_rect.height(),
         0,
         xcb::WINDOW_CLASS_INPUT_OUTPUT as u16,
         screen.root_visual(),
@@ -317,6 +323,14 @@ fn run() -> i32 {
 
     xcb::map_window(&conn, window);
 
+    if !opt.no_guides {
+        let pointer = xcb::query_pointer(&conn, root).get_reply().unwrap();
+        set_shape(&conn, window, &build_guides(
+            screen_rect, xcb::Point::new(pointer.root_x(), pointer.root_y()), guide_width));
+
+        conn.flush();
+    }
+
     conn.flush();
 
     let mut start_pt = xcb::Point::new(0, 0);
@@ -325,7 +339,6 @@ fn run() -> i32 {
     let mut in_selection = false;
     let mut ignore_next_release = false;
 
-    // TODO start drawing guides even before first event, without excess duplication
     // TODO draw rectangle around window under cursor
     loop {
         let ev = conn.wait_for_event().unwrap();
@@ -386,16 +399,9 @@ fn run() -> i32 {
                         ),
                         xcb::Rectangle::new(left, bottom, width + line_width, line_width),
                     ],
-                    (false, false) => vec![
-                        // Guides
-                        xcb::Rectangle::new(
-                            motion.event_x() - guide_width as i16 / 2, 0,
-                            guide_width, scr_height),
-
-                        xcb::Rectangle::new(
-                            0, motion.event_y() - guide_width as i16 / 2,
-                            scr_width, guide_width),
-                    ],
+                    (false, false) => build_guides(
+                        screen_rect, xcb::Point::new(motion.event_x(), motion.event_y()), guide_width
+                    ),
                     (true, false) => vec![],
                 };
 
