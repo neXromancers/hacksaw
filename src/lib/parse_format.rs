@@ -1,4 +1,5 @@
 extern crate nom;
+
 use self::nom::{
     branch::alt,
     bytes::complete::{is_not, tag},
@@ -17,6 +18,18 @@ pub enum FormatToken {
     X,
     Y,
     Literal(String),
+}
+
+// This newtype is needed to sidestep StructOpt's Vec behaviour
+#[derive(Debug)]
+pub struct Format(pub Vec<FormatToken>);
+
+pub fn parse_format_string(input: &str) -> Result<Format, String> {
+    match parse_all(input) {
+        Ok(("", v)) => Ok(Format { 0: v }),
+        Err(s) => Err(format!("Format string parse error: {:?}", s)),
+        Ok((s, _)) => Err(format!("Format string parse error near \"{}\"", s)),
+    }
 }
 
 fn parse_format(input: &str) -> IResult<&str, FormatToken> {
@@ -45,7 +58,7 @@ fn parse_anything(input: &str) -> IResult<&str, FormatToken> {
     alt((parse_format, parse_literal))(input)
 }
 
-pub fn parse_all(input: &str) -> IResult<&str, Vec<FormatToken>> {
+fn parse_all(input: &str) -> IResult<&str, Vec<FormatToken>> {
     // Parse as many individual tokens as we can, using the entire string.
     complete(many0(parse_anything))(input)
 }
