@@ -370,42 +370,42 @@ fn run() -> i32 {
             xcb::MOTION_NOTIFY => {
                 let motion: &xcb::MotionNotifyEvent = unsafe { xcb::cast_event(&ev) };
 
-                let (left, right) = min_max(motion.event_x(), start_pt.x());
-                let (top, bottom) = min_max(motion.event_y(), start_pt.y());
-                let width = (right - left) as u16;
-                let height = (bottom - top) as u16;
+                let (left_x, right_x) = min_max(motion.event_x(), start_pt.x());
+                let (top_y, bottom_y) = min_max(motion.event_y(), start_pt.y());
+                let width = (right_x - left_x) as u16;
+                let height = (bottom_y - top_y) as u16;
 
                 // only save the width and height if we are selecting a
                 // rectangle, since we then use these (non-zero width/height)
                 // to determine if a selection was made.
                 if in_selection {
-                    selection = xcb::Rectangle::new(left, top, width, height);
+                    selection = xcb::Rectangle::new(left_x, top_y, width, height);
                 } else {
-                    selection = xcb::Rectangle::new(left, top, 0, 0);
+                    selection = xcb::Rectangle::new(left_x, top_y, 0, 0);
                 }
 
                 let rects = match (opt.no_guides, in_selection) {
                     (_, true) => vec![
                         // Selection rectangle
                         xcb::Rectangle::new(
-                            left - line_width as i16,
-                            top,
+                            left_x - line_width as i16,
+                            top_y,
                             line_width,
                             height + line_width,
                         ),
                         xcb::Rectangle::new(
-                            left - line_width as i16,
-                            top - line_width as i16,
+                            left_x - line_width as i16,
+                            top_y - line_width as i16,
                             width + line_width,
                             line_width,
                         ),
                         xcb::Rectangle::new(
-                            right,
-                            top - line_width as i16,
+                            right_x,
+                            top_y - line_width as i16,
                             line_width,
                             height + line_width,
                         ),
-                        xcb::Rectangle::new(left, bottom, width + line_width, line_width),
+                        xcb::Rectangle::new(left_x, bottom_y, width + line_width, line_width),
                     ],
                     (false, false) => build_guides(
                         screen_rect, xcb::Point::new(motion.event_x(), motion.event_y()), guide_width
