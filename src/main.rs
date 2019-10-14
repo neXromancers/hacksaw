@@ -111,7 +111,14 @@ fn get_window_at_point(
         .filter(|&child| input_output(conn, *child))
         .filter_map(|&child| {
             let geom = get_window_geom(conn, child);
-            if contained(geom.x, geom.y, geom.width as i16, geom.height as i16, pt.x(), pt.y()) {
+            if contained(
+                geom.x,
+                geom.y,
+                geom.width as i16,
+                geom.height as i16,
+                pt.x(),
+                pt.y(),
+            ) {
                 Some(geom)
             } else {
                 None
@@ -257,8 +264,13 @@ fn min_max(a: i16, b: i16) -> (i16, i16) {
 
 fn build_guides(screen: xcb::Rectangle, pt: xcb::Point, width: u16) -> Vec<xcb::Rectangle> {
     vec![
-        xcb::Rectangle::new(pt.x() - width as i16 / 2, screen.x(), width, screen.height()),
-        xcb::Rectangle::new(screen.y(), pt.y() - width as i16  / 2, screen.width(), width),
+        xcb::Rectangle::new(
+            pt.x() - width as i16 / 2,
+            screen.x(),
+            width,
+            screen.height(),
+        ),
+        xcb::Rectangle::new(screen.y(), pt.y() - width as i16 / 2, screen.width(), width),
     ]
 }
 
@@ -286,7 +298,8 @@ fn run() -> i32 {
         return 1;
     }
 
-    let screen_rect = xcb::Rectangle::new(0, 0, screen.width_in_pixels(), screen.height_in_pixels());
+    let screen_rect =
+        xcb::Rectangle::new(0, 0, screen.width_in_pixels(), screen.height_in_pixels());
 
     // TODO event handling for expose/keypress
     let values = [
@@ -325,8 +338,15 @@ fn run() -> i32 {
 
     if !opt.no_guides {
         let pointer = xcb::query_pointer(&conn, root).get_reply().unwrap();
-        set_shape(&conn, window, &build_guides(
-            screen_rect, xcb::Point::new(pointer.root_x(), pointer.root_y()), guide_width));
+        set_shape(
+            &conn,
+            window,
+            &build_guides(
+                screen_rect,
+                xcb::Point::new(pointer.root_x(), pointer.root_y()),
+                guide_width,
+            ),
+        );
 
         conn.flush();
     }
@@ -353,9 +373,7 @@ fn run() -> i32 {
                 } else {
                     set_shape(&conn, window, &[]);
                     conn.flush();
-                    start_pt = xcb::Point::new(
-                        button_press.event_x(),
-                        button_press.event_y());
+                    start_pt = xcb::Point::new(button_press.event_x(), button_press.event_y());
 
                     in_selection = !(detail == 4 || detail == 5);
                     ignore_next_release = detail == 4 || detail == 5;
@@ -408,7 +426,9 @@ fn run() -> i32 {
                         xcb::Rectangle::new(left_x, bottom_y, width + line_width, line_width),
                     ],
                     (false, false) => build_guides(
-                        screen_rect, xcb::Point::new(motion.event_x(), motion.event_y()), guide_width
+                        screen_rect,
+                        xcb::Point::new(motion.event_x(), motion.event_y()),
+                        guide_width,
                     ),
                     (true, false) => vec![],
                 };
