@@ -2,11 +2,11 @@ extern crate structopt;
 extern crate xcb;
 mod lib;
 
+use lib::parse_args::Opt;
 use lib::{
     fill_format_string, get_window_at_point, get_window_geom, grab_pointer_set_cursor, set_shape,
     set_title, HacksawResult, CURSOR_GRAB_TRIES,
 };
-use lib::parse_args::{Opt};
 use structopt::StructOpt;
 
 fn min_max(a: i16, b: i16) -> (i16, i16) {

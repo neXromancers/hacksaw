@@ -1,5 +1,5 @@
-pub mod parse_format;
 pub mod parse_args;
+pub mod parse_format;
 
 use self::parse_format::FormatToken;
 use xcb::shape;
