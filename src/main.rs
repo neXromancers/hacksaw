@@ -374,7 +374,15 @@ fn run() -> i32 {
                 let (top, bottom) = min_max(motion.event_y(), start_pt.y());
                 let width = (right - left) as u16;
                 let height = (bottom - top) as u16;
-                selection = xcb::Rectangle::new(left, top, width, height);
+
+                // only save the width and height if we are selecting a
+                // rectangle, since we then use these (non-zero width/height)
+                // to determine if a selection was made.
+                if in_selection {
+                    selection = xcb::Rectangle::new(left, top, width, height);
+                } else {
+                    selection = xcb::Rectangle::new(left, top, 0, 0);
+                }
 
                 let rects = match (opt.no_guides, in_selection) {
                     (_, true) => vec![
