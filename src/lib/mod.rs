@@ -9,20 +9,32 @@ pub const CURSOR_GRAB_TRIES: i32 = 5;
 #[derive(Clone, Copy)]
 pub struct HacksawResult {
     pub window: u32,
-    pub x: i16,
-    pub y: i16,
-    pub width: u16,
-    pub height: u16,
+    pub rect: xcb::Rectangle,
 }
 
 impl HacksawResult {
+    pub fn x(&self) -> i16 {
+        return self.rect.x();
+    }
+    pub fn y(&self) -> i16 {
+        return self.rect.y();
+    }
+    pub fn width(&self) -> u16 {
+        return self.rect.width();
+    }
+    pub fn height(&self) -> u16 {
+        return self.rect.height();
+    }
+
     pub fn relative_to(&self, parent: HacksawResult) -> HacksawResult {
         HacksawResult {
             window: self.window,
-            x: parent.x + self.x,
-            y: parent.y + self.y,
-            width: self.width,
-            height: self.height,
+            rect: xcb::Rectangle::new(
+                parent.x() + self.x(),
+                parent.y() + self.y(),
+                self.width(),
+                self.height(),
+            ),
         }
     }
 }
@@ -34,12 +46,15 @@ pub fn fill_format_string(format: Vec<FormatToken>, result: HacksawResult) -> St
             FormatToken::WindowId => result.window.to_string(),
             FormatToken::Geometry => format!(
                 "{}x{}+{}+{}",
-                result.width, result.height, result.x, result.y
+                result.width(),
+                result.height(),
+                result.x(),
+                result.y(),
             ),
-            FormatToken::Width => result.width.to_string(),
-            FormatToken::Height => result.height.to_string(),
-            FormatToken::X => result.x.to_string(),
-            FormatToken::Y => result.y.to_string(),
+            FormatToken::Width => result.width().to_string(),
+            FormatToken::Height => result.height().to_string(),
+            FormatToken::X => result.x().to_string(),
+            FormatToken::Y => result.y().to_string(),
             FormatToken::Literal(s) => s,
         })
         .collect::<Vec<_>>()
@@ -128,10 +143,12 @@ pub fn get_window_geom(conn: &xcb::Connection, win: xcb::Window) -> HacksawResul
 
     HacksawResult {
         window: win,
-        x: geom.x(),
-        y: geom.y(),
-        width: geom.width() + 2 * geom.border_width(),
-        height: geom.height() + 2 * geom.border_width(),
+        rect: xcb::Rectangle::new(
+            geom.x(),
+            geom.y(),
+            geom.width() + 2 * geom.border_width(),
+            geom.height() + 2 * geom.border_width(),
+        ),
     }
 }
 
@@ -150,10 +167,10 @@ pub fn get_window_at_point(
         .filter_map(|&child| {
             let geom = get_window_geom(conn, child);
             if contained(
-                geom.x,
-                geom.y,
-                geom.width as i16,
-                geom.height as i16,
+                geom.x(),
+                geom.y(),
+                geom.width() as i16,
+                geom.height() as i16,
                 pt.x(),
                 pt.y(),
             ) {
