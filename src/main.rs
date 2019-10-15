@@ -237,12 +237,7 @@ fn run() -> i32 {
     } else {
         result = HacksawResult {
             window: root,
-            rect: xcb::Rectangle::new(
-                selection.x(),
-                selection.y(),
-                selection.width(),
-                selection.height(),
-            ),
+            rect: selection,
         };
     }
 

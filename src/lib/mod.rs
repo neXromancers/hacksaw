@@ -37,6 +37,14 @@ impl HacksawResult {
             ),
         }
     }
+
+    fn contains(&self, point: xcb::Point) -> bool {
+        // TODO negative x/y offsets from bottom or right?
+        self.x() < point.x()
+            && self.y() < point.y()
+            && point.x() - self.x() <= self.width() as i16
+            && point.y() - self.y() <= self.height() as i16
+    }
 }
 
 pub fn fill_format_string(format: Vec<FormatToken>, result: HacksawResult) -> String {
@@ -123,11 +131,6 @@ pub fn grab_pointer_set_cursor(conn: &xcb::Connection, root: u32) -> bool {
     false
 }
 
-fn contained(x: i16, y: i16, width: i16, height: i16, p_x: i16, p_y: i16) -> bool {
-    // TODO negative x/y offsets from bottom or right?
-    x < p_x && y < p_y && p_x - x <= width && p_y - y <= height
-}
-
 fn viewable(conn: &xcb::Connection, win: xcb::Window) -> bool {
     let attrs = xcb::get_window_attributes(conn, win).get_reply().unwrap();
     (attrs.map_state() & xcb::MAP_STATE_VIEWABLE as u8) != 0
@@ -166,14 +169,7 @@ pub fn get_window_at_point(
         .filter(|&child| input_output(conn, *child))
         .filter_map(|&child| {
             let geom = get_window_geom(conn, child);
-            if contained(
-                geom.x(),
-                geom.y(),
-                geom.width() as i16,
-                geom.height() as i16,
-                pt.x(),
-                pt.y(),
-            ) {
+            if geom.contains(pt) {
                 Some(geom)
             } else {
                 None
