@@ -45,28 +45,28 @@ impl HacksawResult {
             && point.x() - self.x() <= self.width() as i16
             && point.y() - self.y() <= self.height() as i16
     }
-}
 
-pub fn fill_format_string(format: Vec<FormatToken>, result: HacksawResult) -> String {
-    format
-        .into_iter()
-        .map(|token| match token {
-            FormatToken::WindowId => result.window.to_string(),
-            FormatToken::Geometry => format!(
-                "{}x{}+{}+{}",
-                result.width(),
-                result.height(),
-                result.x(),
-                result.y(),
-            ),
-            FormatToken::Width => result.width().to_string(),
-            FormatToken::Height => result.height().to_string(),
-            FormatToken::X => result.x().to_string(),
-            FormatToken::Y => result.y().to_string(),
-            FormatToken::Literal(s) => s,
-        })
-        .collect::<Vec<_>>()
-        .join("")
+    pub fn fill_format_string(&self, format: &Vec<FormatToken>) -> String {
+        format
+            .into_iter()
+            .map(|token| match token {
+                FormatToken::WindowId => self.window.to_string(),
+                FormatToken::Geometry => format!(
+                    "{}x{}+{}+{}",
+                    self.width(),
+                    self.height(),
+                    self.x(),
+                    self.y(),
+                ),
+                FormatToken::Width => self.width().to_string(),
+                FormatToken::Height => self.height().to_string(),
+                FormatToken::X => self.x().to_string(),
+                FormatToken::Y => self.y().to_string(),
+                FormatToken::Literal(s) => s.to_string(),
+            })
+            .collect::<Vec<_>>()
+            .join("")
+    }
 }
 
 pub fn set_shape(conn: &xcb::Connection, window: xcb::Window, rects: &[xcb::Rectangle]) {

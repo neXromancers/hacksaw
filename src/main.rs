@@ -4,7 +4,7 @@ mod lib;
 
 use lib::parse_args::Opt;
 use lib::{
-    fill_format_string, get_window_at_point, get_window_geom, grab_pointer_set_cursor, set_shape,
+    get_window_at_point, get_window_geom, grab_pointer_set_cursor, set_shape,
     set_title, HacksawResult, CURSOR_GRAB_TRIES,
 };
 use structopt::StructOpt;
@@ -236,7 +236,7 @@ fn main() -> Result<(), String> {
     }
 
     // Now we have taken coordinates, we print them out
-    println!("{}", fill_format_string(format, result));
+    println!("{}", result.fill_format_string(&format));
 
     Ok(())
 }
