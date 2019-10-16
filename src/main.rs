@@ -29,7 +29,7 @@ fn build_guides(screen: xcb::Rectangle, pt: xcb::Point, width: u16) -> Vec<xcb::
     ]
 }
 
-fn run() -> i32 {
+fn main() -> Result<(), String> {
     let opt = Opt::from_args();
 
     let line_width = opt.select_thickness;
@@ -46,11 +46,7 @@ fn run() -> i32 {
 
     // TODO fix pointer-grab? bug where hacksaw hangs if mouse held down before run
     if !grab_pointer_set_cursor(&conn, root) {
-        eprintln!(
-            "Failed to grab cursor after {} tries, giving up",
-            CURSOR_GRAB_TRIES
-        );
-        return 1;
+        return Err(format!("Failed to grab cursor after {} tries, giving up", CURSOR_GRAB_TRIES));
     }
 
     let screen_rect =
@@ -123,8 +119,7 @@ fn run() -> i32 {
 
                 let detail = button_press.detail();
                 if detail == 3 {
-                    eprintln!("Exiting due to right click");
-                    return 1;
+                    return Err("Exiting due to right click".into());
                 } else {
                     set_shape(&conn, window, &[]);
                     conn.flush();
@@ -137,8 +132,7 @@ fn run() -> i32 {
             xcb::KEY_PRESS => {
                 // TODO fix this by grabbing keyboard
                 // TODO only quit on Esc and similar
-                eprintln!("Exiting due to key press");
-                return 1;
+                return Err("Exiting due to key press".into());
             }
             xcb::MOTION_NOTIFY => {
                 let motion: &xcb::MotionNotifyEvent = unsafe { xcb::cast_event(&ev) };
@@ -244,9 +238,5 @@ fn run() -> i32 {
     // Now we have taken coordinates, we print them out
     println!("{}", fill_format_string(format, result));
 
-    0
-}
-
-fn main() {
-    std::process::exit(run());
+    Ok(())
 }
