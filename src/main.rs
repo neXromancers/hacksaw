@@ -5,7 +5,7 @@ mod lib;
 use lib::parse_args::Opt;
 use lib::{
     get_window_at_point, get_window_geom, grab_pointer_set_cursor, set_shape,
-    set_title, HacksawResult, CURSOR_GRAB_TRIES,
+    set_title, HacksawResult, CURSOR_GRAB_TRIES, grab_escape_key,
 };
 use structopt::StructOpt;
 
@@ -48,6 +48,8 @@ fn main() -> Result<(), String> {
     if !grab_pointer_set_cursor(&conn, root) {
         return Err(format!("Failed to grab cursor after {} tries, giving up", CURSOR_GRAB_TRIES));
     }
+
+    grab_escape_key(&conn, root);
 
     let screen_rect =
         xcb::Rectangle::new(0, 0, screen.width_in_pixels(), screen.height_in_pixels());
@@ -130,9 +132,8 @@ fn main() -> Result<(), String> {
                 }
             }
             xcb::KEY_PRESS => {
-                // TODO fix this by grabbing keyboard
-                // TODO only quit on Esc and similar
-                return Err("Exiting due to key press".into());
+                // This will only happen with an escape key since we only grabbed escape
+                return Err("Exiting due to ESC key press".into());
             }
             xcb::MOTION_NOTIFY => {
                 let motion: &xcb::MotionNotifyEvent = unsafe { xcb::cast_event(&ev) };
@@ -203,6 +204,7 @@ fn main() -> Result<(), String> {
     }
 
     xcb::ungrab_pointer(&conn, xcb::CURRENT_TIME);
+    xcb::ungrab_key(&conn, 9, window, xcb::MOD_MASK_ANY as u16);
     xcb::unmap_window(&conn, window);
     xcb::destroy_window(&conn, window);
     conn.flush();

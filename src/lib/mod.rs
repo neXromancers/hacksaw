@@ -131,6 +131,18 @@ pub fn grab_pointer_set_cursor(conn: &xcb::Connection, root: u32) -> bool {
     false
 }
 
+pub fn grab_escape_key(conn: &xcb::Connection, root: u32) {
+    xcb::grab_key(
+        &conn,
+        true,
+        root,
+        xcb::MOD_MASK_ANY as u16,
+        9, // ESCAPE, would be nice if wasn't a magic number
+        xcb::GRAB_MODE_ASYNC as u8,
+        xcb::GRAB_MODE_ASYNC as u8,
+    );
+}
+
 fn viewable(conn: &xcb::Connection, win: xcb::Window) -> bool {
     let attrs = xcb::get_window_attributes(conn, win).get_reply().unwrap();
     (attrs.map_state() & xcb::MAP_STATE_VIEWABLE as u8) != 0
