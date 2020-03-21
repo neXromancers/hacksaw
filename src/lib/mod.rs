@@ -5,6 +5,7 @@ use self::parse_format::FormatToken;
 use xcb::shape;
 
 pub const CURSOR_GRAB_TRIES: i32 = 5;
+const ESC_KEYCODE: u8 = 9;
 
 #[derive(Clone, Copy)]
 pub struct HacksawResult {
@@ -137,14 +138,14 @@ pub fn grab_escape_key(conn: &xcb::Connection, root: u32) {
         true,
         root,
         xcb::MOD_MASK_ANY as u16,
-        9, // ESCAPE, would be nice if wasn't a magic number
+        ESC_KEYCODE,
         xcb::GRAB_MODE_ASYNC as u8,
         xcb::GRAB_MODE_ASYNC as u8,
     );
 }
 
 pub fn ungrab_escape_key(conn: &xcb::Connection, root: u32) {
-    xcb::ungrab_key(&conn, 9, root, xcb::NONE as u16);
+    xcb::ungrab_key(&conn, ESC_KEYCODE, root, xcb::NONE as u16);
 }
 
 fn viewable(conn: &xcb::Connection, win: xcb::Window) -> bool {
