@@ -137,7 +137,7 @@ pub fn grab_escape_key(conn: &xcb::Connection, root: u32) {
         &conn,
         true,
         root,
-        xcb::MOD_MASK_ANY as u16,
+        xcb::NONE as u16,
         ESC_KEYCODE,
         xcb::GRAB_MODE_ASYNC as u8,
         xcb::GRAB_MODE_ASYNC as u8,
