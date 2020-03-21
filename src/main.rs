@@ -46,7 +46,10 @@ fn main() -> Result<(), String> {
 
     // TODO fix pointer-grab? bug where hacksaw hangs if mouse held down before run
     if !grab_pointer_set_cursor(&conn, root) {
-        return Err(format!("Failed to grab cursor after {} tries, giving up", CURSOR_GRAB_TRIES));
+        return Err(format!(
+            "Failed to grab cursor after {} tries, giving up",
+            CURSOR_GRAB_TRIES
+        ));
     }
 
     grab_escape_key(&conn, root);
