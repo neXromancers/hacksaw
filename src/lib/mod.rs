@@ -143,6 +143,10 @@ pub fn grab_escape_key(conn: &xcb::Connection, root: u32) {
     );
 }
 
+pub fn ungrab_escape_key(conn: &xcb::Connection, root: u32) {
+    xcb::ungrab_key(&conn, 9, root, xcb::NONE as u16);
+}
+
 fn viewable(conn: &xcb::Connection, win: xcb::Window) -> bool {
     let attrs = xcb::get_window_attributes(conn, win).get_reply().unwrap();
     (attrs.map_state() & xcb::MAP_STATE_VIEWABLE as u8) != 0

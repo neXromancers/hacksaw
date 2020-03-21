@@ -4,8 +4,8 @@ mod lib;
 
 use lib::parse_args::Opt;
 use lib::{
-    get_window_at_point, get_window_geom, grab_pointer_set_cursor, set_shape,
-    set_title, HacksawResult, CURSOR_GRAB_TRIES, grab_escape_key,
+    get_window_at_point, get_window_geom, grab_escape_key, grab_pointer_set_cursor, set_shape,
+    set_title, ungrab_escape_key, HacksawResult, CURSOR_GRAB_TRIES,
 };
 use structopt::StructOpt;
 
@@ -204,7 +204,7 @@ fn main() -> Result<(), String> {
     }
 
     xcb::ungrab_pointer(&conn, xcb::CURRENT_TIME);
-    xcb::ungrab_key(&conn, 9, window, xcb::MOD_MASK_ANY as u16);
+    ungrab_escape_key(&conn, root);
     xcb::unmap_window(&conn, window);
     xcb::destroy_window(&conn, window);
     conn.flush();
