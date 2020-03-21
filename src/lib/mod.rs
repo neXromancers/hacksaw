@@ -7,6 +7,19 @@ use xcb::shape;
 pub const CURSOR_GRAB_TRIES: i32 = 5;
 const ESC_KEYCODE: u8 = 9;
 
+const KEY_GRAB_MASKS: [u32; 10] = [
+    xcb::NONE,
+    xcb::MOD_MASK_SHIFT,
+    xcb::MOD_MASK_CONTROL,
+    xcb::MOD_MASK_LOCK,
+    xcb::MOD_MASK_1,
+    xcb::MOD_MASK_2,
+    xcb::MOD_MASK_3,
+    xcb::MOD_MASK_4,
+    xcb::MOD_MASK_5,
+    xcb::MOD_MASK_ANY,
+];
+
 #[derive(Clone, Copy)]
 pub struct HacksawResult {
     pub window: u32,
@@ -133,19 +146,23 @@ pub fn grab_pointer_set_cursor(conn: &xcb::Connection, root: u32) -> bool {
 }
 
 pub fn grab_escape_key(conn: &xcb::Connection, root: u32) {
-    xcb::grab_key(
-        &conn,
-        true,
-        root,
-        xcb::NONE as u16,
-        ESC_KEYCODE,
-        xcb::GRAB_MODE_ASYNC as u8,
-        xcb::GRAB_MODE_ASYNC as u8,
-    );
+    for &mask in KEY_GRAB_MASKS.iter() {
+        xcb::grab_key(
+            &conn,
+            true,
+            root,
+            mask as u16,
+            ESC_KEYCODE,
+            xcb::GRAB_MODE_ASYNC as u8,
+            xcb::GRAB_MODE_ASYNC as u8,
+        );
+    }
 }
 
 pub fn ungrab_escape_key(conn: &xcb::Connection, root: u32) {
-    xcb::ungrab_key(&conn, ESC_KEYCODE, root, xcb::NONE as u16);
+    for &mask in KEY_GRAB_MASKS.iter() {
+        xcb::ungrab_key(&conn, ESC_KEYCODE, root, mask as u16);
+    }
 }
 
 fn viewable(conn: &xcb::Connection, win: xcb::Window) -> bool {
