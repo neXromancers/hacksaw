@@ -5,6 +5,14 @@ use self::parse_format::FormatToken;
 use xcb::shape;
 
 pub const CURSOR_GRAB_TRIES: i32 = 5;
+const ESC_KEYCODE: u8 = 9;
+
+/// Since MOD_MASK_ANY is apparently bug-ridden, we instead exploit the fact
+/// that the modifier masks NONE to MOD_MASK_5 are 0, 1, 2, 4, 8, ... 128.
+/// Then we grab on every possible combination of these masks by iterating
+/// through all the integers 0 to 255. This allows us to grab Esc, Shift+Esc,
+/// CapsLock+Shift+Esc, or any other combination.
+const KEY_GRAB_MASK_MAX: xcb::ModMask = (xcb::MOD_MASK_5 * 2) - 1;
 
 #[derive(Clone, Copy)]
 pub struct HacksawResult {
@@ -129,6 +137,26 @@ pub fn grab_pointer_set_cursor(conn: &xcb::Connection, root: u32) -> bool {
     }
 
     false
+}
+
+pub fn grab_escape_key(conn: &xcb::Connection, root: u32) {
+    for mask in 0..=KEY_GRAB_MASK_MAX {
+        xcb::grab_key(
+            &conn,
+            true,
+            root,
+            mask as u16,
+            ESC_KEYCODE,
+            xcb::GRAB_MODE_ASYNC as u8,
+            xcb::GRAB_MODE_ASYNC as u8,
+        );
+    }
+}
+
+pub fn ungrab_escape_key(conn: &xcb::Connection, root: u32) {
+    for mask in 0..=KEY_GRAB_MASK_MAX {
+        xcb::ungrab_key(&conn, ESC_KEYCODE, root, mask as u16);
+    }
 }
 
 fn viewable(conn: &xcb::Connection, win: xcb::Window) -> bool {
