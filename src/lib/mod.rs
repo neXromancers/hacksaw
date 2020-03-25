@@ -5,7 +5,7 @@ use self::parse_format::FormatToken;
 use xcb::shape;
 
 pub const CURSOR_GRAB_TRIES: i32 = 5;
-const ESC_KEYCODE: u8 = 9;
+const ESC_KEYSYM: u32 = 0xff1b;
 
 /// Since MOD_MASK_ANY is apparently bug-ridden, we instead exploit the fact
 /// that the modifier masks NONE to MOD_MASK_5 are 0, 1, 2, 4, 8, ... 128.
@@ -139,23 +139,41 @@ pub fn grab_pointer_set_cursor(conn: &xcb::Connection, root: u32) -> bool {
     false
 }
 
-pub fn grab_escape_key(conn: &xcb::Connection, root: u32) {
+pub fn find_escape_keycode(conn: &xcb::Connection) -> xcb::Keycode {
+    // https://stackoverflow.com/questions/18689863/obtain-keyboard-layout-and-keysyms-with-xcb
+    let setup = conn.get_setup();
+    let cookie = xcb::get_keyboard_mapping(
+        &conn,
+        setup.min_keycode(),
+        setup.max_keycode() - setup.min_keycode() + 1,
+    );
+    let reply = cookie.get_reply().expect("failed to get keyboard mapping");
+
+    let escape_index = reply
+        .keysyms()
+        .iter()
+        .position(|&keysym| keysym == ESC_KEYSYM)
+        .expect("failed to find escape keysym");
+    (escape_index / reply.keysyms_per_keycode() as usize) as u8 + setup.min_keycode()
+}
+
+pub fn grab_key(conn: &xcb::Connection, root: u32, keycode: u8) {
     for mask in 0..=KEY_GRAB_MASK_MAX {
         xcb::grab_key(
             &conn,
             true,
             root,
             mask as u16,
-            ESC_KEYCODE,
+            keycode,
             xcb::GRAB_MODE_ASYNC as u8,
             xcb::GRAB_MODE_ASYNC as u8,
         );
     }
 }
 
-pub fn ungrab_escape_key(conn: &xcb::Connection, root: u32) {
+pub fn ungrab_key(conn: &xcb::Connection, root: u32, keycode: u8) {
     for mask in 0..=KEY_GRAB_MASK_MAX {
-        xcb::ungrab_key(&conn, ESC_KEYCODE, root, mask as u16);
+        xcb::ungrab_key(&conn, keycode, root, mask as u16);
     }
 }
 
