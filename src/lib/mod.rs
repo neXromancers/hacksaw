@@ -22,16 +22,16 @@ pub struct HacksawResult {
 
 impl HacksawResult {
     pub fn x(&self) -> i16 {
-        return self.rect.x();
+        self.rect.x()
     }
     pub fn y(&self) -> i16 {
-        return self.rect.y();
+        self.rect.y()
     }
     pub fn width(&self) -> u16 {
-        return self.rect.width();
+        self.rect.width()
     }
     pub fn height(&self) -> u16 {
-        return self.rect.height();
+        self.rect.height()
     }
 
     pub fn relative_to(&self, parent: HacksawResult) -> HacksawResult {
@@ -54,9 +54,9 @@ impl HacksawResult {
             && point.y() - self.y() <= self.height() as i16
     }
 
-    pub fn fill_format_string(&self, format: &Vec<FormatToken>) -> String {
+    pub fn fill_format_string(&self, format: &[FormatToken]) -> String {
         format
-            .into_iter()
+            .iter()
             .map(|token| match token {
                 FormatToken::WindowId => self.window.to_string(),
                 FormatToken::Geometry => format!(
@@ -223,7 +223,7 @@ pub fn get_window_at_point(
         })
         .collect::<Vec<_>>();
 
-    if children.len() == 0 {
+    if children.is_empty() {
         return None;
     }
 
