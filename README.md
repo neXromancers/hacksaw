@@ -45,7 +45,6 @@ cargo install --git https://github.com/neXromancers/hacksaw
 ### Stability
 - Main functionality is all there and pretty solid
 - You may experience bugs when invoking hacksaw while a popup is open
-- Pressing escape to exit selection is not yet implemented
 
 ### Usage
 
