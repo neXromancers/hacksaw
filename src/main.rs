@@ -118,12 +118,10 @@ fn main() -> Result<(), String> {
 
     // TODO draw rectangle around window under cursor
     loop {
-        let ev = match conn.wait_for_event() {
-            Some(ev) => ev,
-            None => {
-                return Err("Error getting X event, quitting.".into());
-            }
-        };
+        let ev = conn
+            .wait_for_event()
+            .ok_or_else(|| "Error getting X event, quitting.".to_string())?;
+
         match ev.response_type() {
             xcb::BUTTON_PRESS => {
                 let button_press: &xcb::ButtonPressEvent = unsafe { xcb::cast_event(&ev) };
@@ -219,12 +217,10 @@ fn main() -> Result<(), String> {
     conn.flush();
 
     loop {
-        let ev = match conn.wait_for_event() {
-            Some(ev) => ev,
-            None => {
-                return Err("Error getting X event, quitting.".into());
-            }
-        };
+        let ev = conn
+            .wait_for_event()
+            .ok_or_else(|| "Error getting X event, quitting.".to_string())?;
+
         match ev.response_type() {
             xcb::UNMAP_NOTIFY => {
                 break;
