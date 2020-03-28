@@ -1,7 +1,14 @@
 [package]
 name = "hacksaw"
-version = "0.1.0"
+description = "Lightweight selection tool for usage in screenshot scripts etc."
+version = "1.0.0"
 authors = ["expectocode <expectocode@gmail.com>"]
+license-file = "LICENSE.txt"
+repository = "https://github.com/neXromancers/hacksaw.git"
+homepage = "https://github.com/neXromancers/hacksaw"
+readme = "README.md"
+keywords = ["x11", "screenshot", "selection", "nexromancers"]
+edition = "2018"
 
 [dependencies]
 structopt = "0.2"
