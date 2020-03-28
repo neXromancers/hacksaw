@@ -31,7 +31,7 @@ pub struct Opt {
         short = "c",
         long = "colour",
         default_value = "#7f7f7f",
-        parse(try_from_str = "parse_hex"),
+        parse(try_from_str = parse_hex),
         help = "Hex colour of the lines (RGB or RGBA), '#' optional"
     )]
     pub line_colour: u32,
@@ -40,8 +40,8 @@ pub struct Opt {
         short = "f",
         long = "format",
         default_value = "%g",
-        parse(try_from_str = "parse_format_string"),
-        raw(allow_hyphen_values = "true"),
+        parse(try_from_str = parse_format_string),
+        allow_hyphen_values = true,
         help = "Output format. You can use %x for x-coordinate, %y for y-coordinate, %w for width, \
                 %h for height, %i for selected window id, %g as a shorthand for %wx%h+%x+%y (the \
                 default, X geometry) and %% for a literal '%'. Other %-codes will cause an error."
