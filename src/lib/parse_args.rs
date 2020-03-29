@@ -2,7 +2,7 @@ use super::parse_format::{parse_format_string, Format};
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
-#[structopt(name = "hacksaw")]
+#[structopt(name = "hacksaw", max_term_width = 80)]
 pub struct Opt {
     #[structopt(
         short = "n",
@@ -42,9 +42,16 @@ pub struct Opt {
         default_value = "%g",
         parse(try_from_str = parse_format_string),
         allow_hyphen_values = true,
-        help = "Output format. You can use %x for x-coordinate, %y for y-coordinate, %w for width, \
-                %h for height, %i for selected window id, %g as a shorthand for %wx%h+%x+%y (the \
-                default, X geometry) and %% for a literal '%'. Other %-codes will cause an error."
+        help = "\
+Output format. You can use:
+      %x for x-coordinate,
+      %y for y-coordinate,
+      %w for width,
+      %h for height,
+      %i for selected window id,
+      %g as a shorthand for %wx%h+%x+%y (X geometry),
+      %% for a literal '%'.
+Other %-codes will cause an error."
     )]
     pub format: Format,
 
