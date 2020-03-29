@@ -26,7 +26,7 @@ pub struct Format(pub Vec<FormatToken>);
 
 pub fn parse_format_string(input: &str) -> Result<Format, String> {
     match parse_all(input) {
-        Ok(("", v)) => Ok(Format { 0: v }),
+        Ok(("", v)) => Ok(Format(v)),
         Err(s) => Err(format!("Format string parse error: {:?}", s)),
         Ok((s, _)) => Err(format!("Format string parse error near \"{}\"", s)),
     }
