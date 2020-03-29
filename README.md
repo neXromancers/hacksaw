@@ -2,7 +2,7 @@
 
 (on x11)
 
-![screencast](https://user-images.githubusercontent.com/15344581/49049792-67b5d580-f1d8-11e8-871c-74fc8cc72d96.gif)
+![screencast](https://user-images.githubusercontent.com/15344581/77849939-29169d80-71c7-11ea-91c4-7e95a743d54c.gif)
 
 ### Installation
 
