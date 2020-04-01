@@ -1,7 +1,7 @@
 [package]
 name = "hacksaw"
 description = "Lightweight selection tool for usage in screenshot scripts etc."
-version = "1.0.3"
+version = "1.0.4"
 authors = ["expectocode <expectocode@gmail.com>"]
 license-file = "LICENSE.txt"
 repository = "https://github.com/neXromancers/hacksaw.git"
