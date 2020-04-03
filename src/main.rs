@@ -17,8 +17,8 @@ fn min_max(a: i16, b: i16) -> (i16, i16) {
     }
 }
 
-fn build_guides(screen: xcb::Rectangle, pt: xcb::Point, width: u16) -> Vec<xcb::Rectangle> {
-    vec![
+fn build_guides(screen: xcb::Rectangle, pt: xcb::Point, width: u16) -> [xcb::Rectangle; 2] {
+    [
         xcb::Rectangle::new(
             pt.x() - width as i16 / 2,
             screen.x(),
@@ -159,8 +159,8 @@ fn main() -> Result<(), String> {
                     selection = xcb::Rectangle::new(left_x, top_y, 0, 0);
                 }
 
-                let rects = match (opt.no_guides, in_selection) {
-                    (_, true) => vec![
+                if in_selection {
+                    let rects = [
                         // Selection rectangle
                         xcb::Rectangle::new(
                             left_x - line_width as i16,
@@ -181,16 +181,18 @@ fn main() -> Result<(), String> {
                             height + line_width,
                         ),
                         xcb::Rectangle::new(left_x, bottom_y, width + line_width, line_width),
-                    ],
-                    (false, false) => build_guides(
+                    ];
+                    set_shape(&conn, window, &rects);
+                } else if !opt.no_guides {
+                    let rects = build_guides(
                         screen_rect,
                         xcb::Point::new(motion.event_x(), motion.event_y()),
                         guide_width,
-                    ),
-                    (true, false) => vec![],
-                };
+                    );
 
-                set_shape(&conn, window, &rects);
+                    set_shape(&conn, window, &rects);
+                }
+
                 conn.flush();
             }
             xcb::BUTTON_RELEASE => {
