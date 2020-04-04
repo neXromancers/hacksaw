@@ -104,8 +104,6 @@ fn main() -> Result<(), String> {
                 guide_width,
             ),
         );
-
-        conn.flush();
     }
 
     conn.flush();
