@@ -1,4 +1,6 @@
 use super::parse_format::{parse_format_string, Format};
+
+use std::fmt;
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
@@ -70,8 +72,8 @@ struct ParseHexError<'a> {
     source: &'a str,
 }
 
-impl<'a> std::fmt::Display for ParseHexError<'a> {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl<'a> fmt::Display for ParseHexError<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Could not parse \"{}\": {}", self.source, self.reason)
     }
 }
