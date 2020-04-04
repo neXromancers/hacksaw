@@ -24,6 +24,8 @@ Simply run ` cargo install hacksaw ` to install from crates.io.
 #### Manual installation alternative
 Clone this repo, `cd` into it, and run `cargo install --path .`
 
+#### Installation using Nix
+hacksaw is in the NUR under [`nexromancers`](https://github.com/neXromancers/nixromancers) as `nur.repos.nexromancers.pkgs.hacksaw`.
 
 ### Examples
 #### Take a screenshot (with [shotgun](https://github.com/neXromancers/shotgun)) of a selection/window and copy to clipboard
