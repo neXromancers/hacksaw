@@ -206,6 +206,7 @@ pub fn get_window_at_point(
     win: xcb::Window,
     pt: xcb::Point,
     remove_decorations: u32,
+    ignore_window: Option<xcb::Window>,
 ) -> Option<HacksawResult> {
     let tree = xcb::query_tree(conn, win).get_reply().unwrap();
     let children = tree
@@ -213,6 +214,7 @@ pub fn get_window_at_point(
         .iter()
         .filter(|&child| viewable(conn, *child))
         .filter(|&child| input_output(conn, *child))
+        .filter(|&child| Some(*child) != ignore_window)
         .filter_map(|&child| {
             let geom = get_window_geom(conn, child);
             if geom.contains(pt) {
