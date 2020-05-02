@@ -18,23 +18,25 @@ pub(crate) fn parse_format_string(input: &str) -> Result<Format, String> {
     let mut input = input.as_bytes();
 
     loop {
-        let (token, rest) = match input {
-            [b'%', b'i', rest @ ..] => (FormatToken::WindowId, rest),
-            [b'%', b'g', rest @ ..] => (FormatToken::Geometry, rest),
-            [b'%', b'w', rest @ ..] => (FormatToken::Width, rest),
-            [b'%', b'h', rest @ ..] => (FormatToken::Height, rest),
-            [b'%', b'x', rest @ ..] => (FormatToken::X, rest),
-            [b'%', b'y', rest @ ..] => (FormatToken::Y, rest),
-            [b'%', b'%', rest @ ..] => (FormatToken::Literal("%".to_owned()), rest),
-            [b'%', c, ..] => break Err(format!("Unknown format '%{}'", *c as char)),
-            [b'%'] => break Err("Incorrectly terminated '%'".to_owned()),
-            [_, ..] => {
+        let (token, rest) = match input.split_first() {
+            Some((b'%', format_rest)) => match format_rest.split_first() {
+                Some((b'i', rest)) => (FormatToken::WindowId, rest),
+                Some((b'g', rest)) => (FormatToken::Geometry, rest),
+                Some((b'w', rest)) => (FormatToken::Width, rest),
+                Some((b'h', rest)) => (FormatToken::Height, rest),
+                Some((b'x', rest)) => (FormatToken::X, rest),
+                Some((b'y', rest)) => (FormatToken::Y, rest),
+                Some((b'%', rest)) => (FormatToken::Literal("%".to_owned()), rest),
+                Some((c, _)) => break Err(format!("Unknown format '%{}'", *c as char)),
+                None => break Err("Incorrectly terminated '%'".to_owned()),
+            }
+            Some((_, _)) => {
                 let next_perc = input.iter().position(|&c| c == b'%');
                 let (literal, rest) = input.split_at(next_perc.unwrap_or_else(|| input.len()));
                 let literal = FormatToken::Literal(String::from_utf8_lossy(literal).into_owned());
                 (literal, rest)
             }
-            [] => break Ok(tokens),
+            None => break Ok(tokens),
         };
 
         tokens.push(token);
