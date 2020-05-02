@@ -2,7 +2,7 @@
 
 (on x11)
 
-![screencast](https://user-images.githubusercontent.com/15344581/77849939-29169d80-71c7-11ea-91c4-7e95a743d54c.gif)
+![screencast][screencast gif]
 
 ### Installation
 
@@ -25,10 +25,10 @@ Simply run ` cargo install hacksaw ` to install from crates.io.
 Clone this repo, `cd` into it, and run `cargo install --path .`
 
 #### Nixpkgs
-hacksaw is in the [NUR](https://github.com/nix-community/NUR) under [`nexromancers`](https://github.com/neXromancers/nixromancers) as [`nur.repos.nexromancers.pkgs.hacksaw`](https://github.com/neXromancers/nixromancers/blob/master/pkgs/tools/misc/hacksaw/generic.nix).
+hacksaw is in the [NUR][nur] under [`nexromancers`][nur nexromancers] as [`nur.repos.nexromancers.pkgs.hacksaw`][nix-expr hacksaw].
 
 ### Examples
-#### Take a screenshot (with [shotgun](https://github.com/neXromancers/shotgun)) of a selection/window and copy to clipboard
+#### Take a screenshot (with [shotgun][shotgun]) of a selection/window and copy to clipboard
 ```sh
 selection=$(hacksaw)  # add hacksaw arguments inside as you wish
 shotgun -g "$selection" - | xclip -t 'image/png' -selection clipboard
@@ -71,11 +71,11 @@ hacksaw -n | {
 }
 ```
 
-#### Also: [open a terminal with the selected size and shape (on bspwm)](https://github.com/turquoise-hexagon/dots/blob/896422dd12a/wm/.local/bin/draw)
+#### Also: [open a terminal with the selected size and shape (on bspwm)][bspwm-draw-terminal]
 
 ### Features
 - **Guide Lines** to check precise positions and line up before you start a selection
-  - just like the popular [Guides](https://github.com/udf/slop-guides) shader for slop
+  - just like the popular [Guides][slop-guides] shader for slop
 - doesn't instantly quit on first keypress
   - keep typing like a pro while you screenshot your memes
   - *(tiling wm exclusive)* you can still navigate windows while in hacksaw
@@ -87,7 +87,7 @@ hacksaw -n | {
 - did i mention it's written in **RUST**
 - *lightweight and fast*
   - not that i've actually run any performance comparisons to slop
-- [one of Thor's favorites](https://xkcd.com/2097/)
+- [one of Thor's favorites][xkcd thor-tools]
 - built for the most *advanced* and *cutting edge* platform of today, ***X11***
 
 ### Stability
@@ -125,3 +125,12 @@ OPTIONS:
 
     -s, --select-thickness <select-thickness>        Thickness of selection box lines [default: 1]
 ```
+
+[bspwm-draw-terminal]: https://github.com/turquoise-hexagon/dots/blob/896422dd12a/wm/.local/bin/draw
+[nix-expr hacksaw]: https://github.com/neXromancers/nixromancers/blob/master/pkgs/tools/misc/hacksaw/generic.nix
+[nur nexromancers]: https://github.com/neXromancers/nixromancers
+[nur]: https://github.com/nix-community/NUR
+[screencast gif]: https://user-images.githubusercontent.com/15344581/77849939-29169d80-71c7-11ea-91c4-7e95a743d54c.gif
+[shotgun]: https://github.com/neXromancers/shotgun
+[slop-guides]: https://github.com/udf/slop-guides
+[xkcd thor-tools]: https://xkcd.com/2097/
