@@ -2,9 +2,9 @@ pub mod parse_args;
 pub mod parse_format;
 
 use self::parse_format::FormatToken;
+use x11rb::connection::Connection;
 use x11rb::protocol::shape;
 use x11rb::protocol::xproto;
-use x11rb::connection::Connection;
 
 pub const CURSOR_GRAB_TRIES: i32 = 5;
 const ESC_KEYSYM: u32 = 0xff1b;
@@ -89,7 +89,10 @@ pub fn set_shape<C: Connection>(conn: &C, window: xproto::Window, rects: &[xprot
         0,
         0,
         &rects,
-    ).unwrap().check().unwrap();
+    )
+    .unwrap()
+    .check()
+    .unwrap();
 }
 
 pub fn set_title<C: Connection>(conn: &C, window: xproto::Window, title: &str) {
@@ -102,17 +105,26 @@ pub fn set_title<C: Connection>(conn: &C, window: xproto::Window, title: &str) {
         8,
         title.len() as u32,
         title.as_bytes(),
-    ).unwrap().check().unwrap();
+    )
+    .unwrap()
+    .check()
+    .unwrap();
 }
 
 pub fn grab_pointer_set_cursor<C: Connection>(conn: &C, root: u32) -> bool {
     let font = conn.generate_id().unwrap();
-    xproto::open_font(conn, font, b"cursor").unwrap().check().unwrap();
+    xproto::open_font(conn, font, b"cursor")
+        .unwrap()
+        .check()
+        .unwrap();
 
     // TODO: create cursor with a Pixmap
     // https://stackoverflow.com/questions/40578969/how-to-create-a-cursor-in-x11-from-raw-data-c
     let cursor = conn.generate_id().unwrap();
-    xproto::create_glyph_cursor(conn, cursor, font, font, 0, 30, 0, 0, 0, 0, 0, 0).unwrap().check().unwrap();
+    xproto::create_glyph_cursor(conn, cursor, font, font, 0, 30, 0, 0, 0, 0, 0, 0)
+        .unwrap()
+        .check()
+        .unwrap();
 
     for i in 0..CURSOR_GRAB_TRIES {
         let reply = xproto::grab_pointer(
@@ -128,7 +140,10 @@ pub fn grab_pointer_set_cursor<C: Connection>(conn: &C, root: u32) -> bool {
             x11rb::NONE,
             cursor,
             x11rb::CURRENT_TIME,
-        ).unwrap().reply().unwrap();
+        )
+        .unwrap()
+        .reply()
+        .unwrap();
 
         if reply.status == xproto::GrabStatus::Success {
             return true;
@@ -147,7 +162,8 @@ pub fn find_escape_keycode<C: Connection>(conn: &C) -> xproto::Keycode {
         conn,
         setup.min_keycode,
         setup.max_keycode - setup.min_keycode + 1,
-    ).unwrap();
+    )
+    .unwrap();
     let reply = cookie.reply().expect("failed to get keyboard mapping");
 
     let escape_index = reply
@@ -168,23 +184,35 @@ pub fn grab_key<C: Connection>(conn: &C, root: u32, keycode: u8) {
             keycode,
             xproto::GrabMode::Async,
             xproto::GrabMode::Async,
-        ).unwrap().check().unwrap();
+        )
+        .unwrap()
+        .check()
+        .unwrap();
     }
 }
 
 pub fn ungrab_key<C: Connection>(conn: &C, root: u32, keycode: u8) {
     for mask in 0..=KEY_GRAB_MASK_MAX {
-        xproto::ungrab_key(conn, keycode, root, mask).unwrap().check().unwrap();
+        xproto::ungrab_key(conn, keycode, root, mask)
+            .unwrap()
+            .check()
+            .unwrap();
     }
 }
 
 fn viewable<C: Connection>(conn: &C, win: xproto::Window) -> bool {
-    let attrs = xproto::get_window_attributes(conn, win).unwrap().reply().unwrap();
+    let attrs = xproto::get_window_attributes(conn, win)
+        .unwrap()
+        .reply()
+        .unwrap();
     attrs.map_state == xproto::MapState::Viewable
 }
 
 pub fn input_output<C: Connection>(conn: &C, win: xproto::Window) -> bool {
-    let attrs = xproto::get_window_attributes(conn, win).unwrap().reply().unwrap();
+    let attrs = xproto::get_window_attributes(conn, win)
+        .unwrap()
+        .reply()
+        .unwrap();
     attrs.class == xproto::WindowClass::InputOutput
 }
 
@@ -230,7 +258,10 @@ pub fn get_window_at_point<C: Connection>(
 
     let mut window = children[children.len() - 1];
     for _ in 0..remove_decorations {
-        let tree = xproto::query_tree(conn, window.window).unwrap().reply().unwrap();
+        let tree = xproto::query_tree(conn, window.window)
+            .unwrap()
+            .reply()
+            .unwrap();
         if tree.children.is_empty() {
             break;
         }

@@ -9,8 +9,8 @@ use lib::{
     set_shape, set_title, ungrab_key, HacksawResult, CURSOR_GRAB_TRIES,
 };
 use structopt::StructOpt;
-use x11rb::protocol::{xproto, Event};
 use x11rb::connection::Connection;
+use x11rb::protocol::{xproto, Event};
 
 fn min_max(a: i16, b: i16) -> (i16, i16) {
     if a < b {
@@ -20,7 +20,11 @@ fn min_max(a: i16, b: i16) -> (i16, i16) {
     }
 }
 
-fn build_guides(screen: xproto::Rectangle, pt: xproto::Point, width: u16) -> [xproto::Rectangle; 2] {
+fn build_guides(
+    screen: xproto::Rectangle,
+    pt: xproto::Point,
+    width: u16,
+) -> [xproto::Rectangle; 2] {
     [
         xproto::Rectangle {
             x: pt.x - width as i16 / 2,
@@ -28,13 +32,12 @@ fn build_guides(screen: xproto::Rectangle, pt: xproto::Point, width: u16) -> [xp
             width: width,
             height: screen.height,
         },
-
         xproto::Rectangle {
             x: screen.y,
             y: pt.y - width as i16 / 2,
             width: screen.width,
             height: width,
-        }
+        },
     ]
 }
 
@@ -68,16 +71,18 @@ fn main() -> Result<(), String> {
         x: 0,
         y: 0,
         width: screen.width_in_pixels,
-        height: screen.height_in_pixels
+        height: screen.height_in_pixels,
     };
 
     // TODO event handling for expose/keypress
     let value_list = xproto::CreateWindowAux::new()
         .background_pixel(line_colour)
-        .event_mask(xproto::EventMask::Exposure
-                        | xproto::EventMask::KeyPress
-                        | xproto::EventMask::StructureNotify
-                        | xproto::EventMask::SubstructureNotify)
+        .event_mask(
+            xproto::EventMask::Exposure
+                | xproto::EventMask::KeyPress
+                | xproto::EventMask::StructureNotify
+                | xproto::EventMask::SubstructureNotify,
+        )
         .override_redirect(1);
 
     xproto::create_window(
@@ -93,16 +98,23 @@ fn main() -> Result<(), String> {
         xproto::WindowClass::InputOutput,
         screen.root_visual,
         &value_list,
-    ).unwrap().check().unwrap();
+    )
+    .unwrap()
+    .check()
+    .unwrap();
 
     set_title(&conn, window, "hacksaw");
 
-    set_shape(&conn, window, &[xproto::Rectangle {
-        x: 0,
-        y: 0,
-        width: 0,
-        height: 0
-    }]);
+    set_shape(
+        &conn,
+        window,
+        &[xproto::Rectangle {
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0,
+        }],
+    );
 
     xproto::map_window(&conn, window).unwrap().check().unwrap();
 
@@ -124,15 +136,12 @@ fn main() -> Result<(), String> {
 
     conn.flush().unwrap();
 
-    let mut start_pt = xproto::Point {
-        x: 0,
-        y: 0
-    };
+    let mut start_pt = xproto::Point { x: 0, y: 0 };
     let mut selection = xproto::Rectangle {
         x: 0,
         y: 0,
         width: 0,
-        height: 0
+        height: 0,
     };
 
     let mut in_selection = false;
@@ -154,7 +163,7 @@ fn main() -> Result<(), String> {
                     conn.flush().unwrap();
                     start_pt = xproto::Point {
                         x: button_press.event_x,
-                        y: button_press.event_y
+                        y: button_press.event_y,
                     };
 
                     in_selection = !(detail == 4 || detail == 5);
@@ -215,7 +224,7 @@ fn main() -> Result<(), String> {
                             x: left_x,
                             y: bottom_y,
                             width: width + line_width,
-                            height: line_width
+                            height: line_width,
                         },
                     ];
 
@@ -251,10 +260,19 @@ fn main() -> Result<(), String> {
         };
     }
 
-    xproto::ungrab_pointer(&conn, x11rb::CURRENT_TIME).unwrap().check().unwrap();
+    xproto::ungrab_pointer(&conn, x11rb::CURRENT_TIME)
+        .unwrap()
+        .check()
+        .unwrap();
     ungrab_key(&conn, root, escape_keycode);
-    xproto::unmap_window(&conn, window).unwrap().check().unwrap();
-    xproto::destroy_window(&conn, window).unwrap().check().unwrap();
+    xproto::unmap_window(&conn, window)
+        .unwrap()
+        .check()
+        .unwrap();
+    xproto::destroy_window(&conn, window)
+        .unwrap()
+        .check()
+        .unwrap();
     conn.flush().unwrap();
 
     loop {
@@ -263,8 +281,7 @@ fn main() -> Result<(), String> {
             .map_err(|_| "Error getting X event, quitting.".to_string())?;
 
         match ev {
-            x11rb::protocol::Event::UnmapNotify(_)
-            | x11rb::protocol::Event::DestroyNotify(_) => {
+            x11rb::protocol::Event::UnmapNotify(_) | x11rb::protocol::Event::DestroyNotify(_) => {
                 break;
             }
             _ => (),
