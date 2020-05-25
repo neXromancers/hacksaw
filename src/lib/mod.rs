@@ -40,8 +40,8 @@ impl HacksawResult {
         HacksawResult {
             window: self.window,
             rect: xproto::Rectangle {
-                x: parent.x() - self.x(),
-                y: parent.y() - self.y(),
+                x: parent.x() + self.x(),
+                y: parent.y() + self.y(),
                 width: self.width(),
                 height: self.height(),
             },
@@ -99,7 +99,7 @@ pub fn set_title<C: Connection>(conn: &C, window: xproto::Window, title: &str) {
         window,
         xproto::AtomEnum::WM_NAME,
         xproto::AtomEnum::STRING,
-        xproto::AtomEnum::STRING as u8,
+        8,
         title.len() as u32,
         title.as_bytes(),
     ).unwrap().check().unwrap();
