@@ -1,6 +1,3 @@
-extern crate structopt;
-extern crate x11rb;
-
 mod lib;
 
 use lib::parse_args::Opt;
