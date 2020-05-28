@@ -29,7 +29,7 @@ pub(crate) fn parse_format_string(input: &str) -> Result<Format, String> {
                 Some((b'%', rest)) => (FormatToken::Literal("%".to_owned()), rest),
                 Some((c, _)) => break Err(format!("Unknown format '%{}'", *c as char)),
                 None => break Err("Incorrectly terminated '%'".to_owned()),
-            }
+            },
             Some((_, _)) => {
                 let next_perc = input.iter().position(|&c| c == b'%');
                 let (literal, rest) = input.split_at(next_perc.unwrap_or_else(|| input.len()));
